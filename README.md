@@ -2,7 +2,7 @@
 
 Your ultimate IP dex!
 
-![ipdex Logo](img/logo.svg =250x250)
+<img src="img/logo.svg" width="200" height="400" />
 
 **ipdex** is a simple CLI tool to gather insight about a list of IPs or an IP using the [CrowdSec CTI](https://www.crowdsec.net/cyber-threat-intelligence) (Cyber Threat Intelligence) API.
 
