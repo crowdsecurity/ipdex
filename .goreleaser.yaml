@@ -1,0 +1,98 @@
+before:
+  hooks:
+    - go mod tidy
+
+env:
+- CGO_ENABLED=1
+builds:
+  - id: ipdex-darwin-amd64
+    binary: ipdex
+    main: ./cmd/ipdex
+    goarch:
+      - amd64
+    goos:
+      - darwin
+    env:
+      - CC=o64-clang
+      - CXX=o64-clang++
+    flags:
+      - -trimpath
+    ldflags:
+      - -X crowdsecurity/ipdex/pkg/version.Version={{ .Version }} -X crowdsecurity/ipdex/pkg/version.Version.Commit={{ .Commit }} -X crowdsecurity/ipdex/pkg/version.Version.BuildDate={{ .Date }}
+  - id: ipdex-darwin-arm64
+    binary: ipdex
+    main: ./cmd/ipdex
+    goarch:
+      - arm64
+    goos:
+      - darwin
+    env:
+      - CC=oa64-clang
+      - CXX=oa64-clang++
+    flags:
+      - -trimpath
+    ldflags:
+      - -X crowdsecurity/ipdex/pkg/version.Version={{ .Version }} -X crowdsecurity/ipdex/pkg/version.Version.Commit={{ .Commit }} -X crowdsecurity/ipdex/pkg/version.Version.BuildDate={{ .Date }}
+  - id: ipdex-linux-amd64
+    binary: ipdex
+    main: ./cmd/ipdex
+    env:
+      - CC=x86_64-linux-gnu-gcc
+      - CXX=x86_64-linux-gnu-g++
+    goarch:
+      - amd64
+    goos:
+      - linux
+    flags:
+      - -trimpath
+    ldflags:
+      - -extldflags "-lc -lrt -lpthread" -X crowdsecurity/ipdex/pkg/version.Version={{ .Version }} -X crowdsecurity/ipdex/pkg/version.Version.Commit={{ .Commit }} -X crowdsecurity/ipdex/pkg/version.Version.BuildDate={{ .Date }}
+  - id: ipdex-linux-arm64
+    binary: ipdex
+    main: ./cmd/ipdex
+    goarch:
+      - arm64
+    goos:
+      - linux
+    env:
+      - CC=aarch64-linux-gnu-gcc
+      - CXX=aarch64-linux-gnu-g++
+    flags:
+      - -trimpath
+    ldflags:
+      - -extldflags "-lc -lrt -lpthread" -X crowdsecurity/ipdex/pkg/version.Version={{ .Version }} -X crowdsecurity/ipdex/pkg/version.Version.Commit={{ .Commit }} -X crowdsecurity/ipdex/pkg/version.Version.BuildDate={{ .Date }}
+  - id: ipdex-windows-amd64
+    binary: ipdex
+    main: ./cmd/ipdex
+    goarch:
+      - amd64
+    goos:
+      - windows
+    env:
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    flags:
+      - -trimpath
+      - -buildmode=exe
+    ldflags:
+      - -X crowdsecurity/ipdex/pkg/version.Version={{ .Version }} -X crowdsecurity/ipdex/pkg/version.Version.Commit={{ .Commit }} -X crowdsecurity/ipdex/pkg/version.Version.BuildDate={{ .Date }}
+
+archives:
+  - id: build binaries
+    builds:
+      - ipdex-darwin-amd64
+      - ipdex-darwin-arm64
+      - ipdex-linux-amd64
+      - ipdex-linux-arm64
+      - ipdex-windows-amd64
+    name_template: "ipdex_{{ .Os }}_{{ .Arch }}"
+    format: binary
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+
+

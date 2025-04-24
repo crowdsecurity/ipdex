@@ -1,0 +1,49 @@
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint:
+    strategy:
+        matrix:
+          go: [stable]
+          os: [ubuntu-latest ] #, macos-latest—] #, windows-latest]
+    name: lint
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: Build
+        run: |
+          make build
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64
+      - name: Test
+        run: make test
+  release:
+    needs: lint
+    name: build package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: Set up GOPATH
+        run: echo "GOPATH=$HOME/go" >> $GITHUB_ENV

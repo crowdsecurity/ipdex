@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+#  lint:
+#    strategy:
+#        matrix:
+#          go: [stable]
+#          os: [ubuntu-latest] # , macos-latest, windows-latest]
+#    name: lint
+#    runs-on: ${{ matrix.os }}
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Set up Go
+#        uses: actions/setup-go@v5
+#        with:
+#          go-version: '1.24'
+#      - name: Build
+#        run: |
+#            make build
+#      - name: golangci-lint
+#        uses: golangci/golangci-lint-action@v6
+#        with:
+#          version: v1.64
+#      - name: Test
+#        run: make test
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: git fetch --prune --unshallow
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"      
+      - name: Set release version into env variable
+        run: echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Set up GOPATH
+        run: echo "GOPATH=$HOME/go" >> $GITHUB_ENV
+      - name: Make and publish
+        run: |
+          make release
+        env:
+          GORELEASER_RELEASE: true
+          GORELEASER_MOUNT_CONFIG: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
