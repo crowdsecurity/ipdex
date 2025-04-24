@@ -13,8 +13,6 @@ Your ultimate IP dex!
 
 ## Table of Contents
 
-## Table of Contents
-
 - [Introduction](#introduction)
 - [Prerequisites](#prerequisites)
 - [Quickstart](#quickstart)
