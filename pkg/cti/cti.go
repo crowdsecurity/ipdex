@@ -1,11 +1,12 @@
 package cti
 
 import (
-	"crowdsecurity/ipdex/pkg/database"
-	"crowdsecurity/ipdex/pkg/version"
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/crowdsecurity/ipdex/pkg/database"
+	"github.com/crowdsecurity/ipdex/pkg/version"
 
 	"github.com/crowdsecurity/crowdsec/pkg/cticlient"
 )

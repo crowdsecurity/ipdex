@@ -1,8 +1,8 @@
 package config
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/style"
-	"crowdsecurity/ipdex/pkg/display"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
+	"github.com/crowdsecurity/ipdex/pkg/display"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

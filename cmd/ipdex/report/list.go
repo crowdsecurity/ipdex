@@ -1,13 +1,14 @@
 package report
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/config"
-	"crowdsecurity/ipdex/cmd/ipdex/style"
-	"crowdsecurity/ipdex/pkg/database"
-	"crowdsecurity/ipdex/pkg/display"
-	"crowdsecurity/ipdex/pkg/report"
 	"fmt"
 	"strconv"
+
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/config"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
+	"github.com/crowdsecurity/ipdex/pkg/database"
+	"github.com/crowdsecurity/ipdex/pkg/display"
+	"github.com/crowdsecurity/ipdex/pkg/report"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"

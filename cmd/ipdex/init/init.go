@@ -1,12 +1,13 @@
 package helper
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/config"
-	"crowdsecurity/ipdex/cmd/ipdex/style"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/config"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/pterm/pterm"

@@ -1,13 +1,14 @@
 package config
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/style"
-	"crowdsecurity/ipdex/pkg/display"
 	"fmt"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"unicode"
+
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
+	"github.com/crowdsecurity/ipdex/pkg/display"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pterm/pterm"
