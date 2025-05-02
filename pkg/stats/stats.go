@@ -1,7 +1,7 @@
 package stats
 
 import (
-	"crowdsecurity/ipdex/pkg/models"
+	"github.com/crowdsecurity/ipdex/pkg/models"
 
 	"github.com/crowdsecurity/crowdsec/pkg/cticlient"
 )

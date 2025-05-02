@@ -1,9 +1,9 @@
 package report
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/config"
-	"crowdsecurity/ipdex/pkg/database"
-	"crowdsecurity/ipdex/pkg/report"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/config"
+	"github.com/crowdsecurity/ipdex/pkg/database"
+	"github.com/crowdsecurity/ipdex/pkg/report"
 
 	"github.com/spf13/viper"
 )

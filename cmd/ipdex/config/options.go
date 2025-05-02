@@ -1,9 +1,10 @@
 package config
 
 import (
-	"crowdsecurity/ipdex/pkg/display"
 	"os"
 	"path/filepath"
+
+	"github.com/crowdsecurity/ipdex/pkg/display"
 )
 
 const (

@@ -1,6 +1,6 @@
 package config
 
-import "crowdsecurity/ipdex/pkg/display"
+import "github.com/crowdsecurity/ipdex/pkg/display"
 
 const (
 	MinIPsWarningOptionDefaultValue = 30

@@ -1,17 +1,18 @@
 package main
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/config"
-	"crowdsecurity/ipdex/cmd/ipdex/file"
-	helper "crowdsecurity/ipdex/cmd/ipdex/init"
-	"crowdsecurity/ipdex/cmd/ipdex/ip"
-	"crowdsecurity/ipdex/cmd/ipdex/report"
-	"crowdsecurity/ipdex/cmd/ipdex/search"
-	"crowdsecurity/ipdex/cmd/ipdex/style"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/config"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/file"
+	helper "github.com/crowdsecurity/ipdex/cmd/ipdex/init"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/ip"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/report"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/search"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

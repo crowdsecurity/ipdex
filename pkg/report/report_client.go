@@ -1,15 +1,16 @@
 package report
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/style"
-	"crowdsecurity/ipdex/pkg/database"
-	"crowdsecurity/ipdex/pkg/display"
-	"crowdsecurity/ipdex/pkg/models"
-	"crowdsecurity/ipdex/pkg/stats"
-	"crowdsecurity/ipdex/pkg/utils"
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
+	"github.com/crowdsecurity/ipdex/pkg/database"
+	"github.com/crowdsecurity/ipdex/pkg/display"
+	"github.com/crowdsecurity/ipdex/pkg/models"
+	"github.com/crowdsecurity/ipdex/pkg/stats"
+	"github.com/crowdsecurity/ipdex/pkg/utils"
 
 	"github.com/crowdsecurity/crowdsec/pkg/cticlient"
 )

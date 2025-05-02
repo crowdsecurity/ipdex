@@ -1,8 +1,8 @@
 package main
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/style"
-	"crowdsecurity/ipdex/pkg/version"
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
+	"github.com/crowdsecurity/ipdex/pkg/version"
 
 	"github.com/spf13/cobra"
 )

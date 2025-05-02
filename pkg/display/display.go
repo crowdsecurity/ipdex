@@ -1,8 +1,6 @@
 package display
 
 import (
-	"crowdsecurity/ipdex/cmd/ipdex/style"
-	"crowdsecurity/ipdex/pkg/models"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,6 +9,9 @@ import (
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
+	"github.com/crowdsecurity/ipdex/pkg/models"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/crowdsecurity/crowdsec/pkg/cticlient"
