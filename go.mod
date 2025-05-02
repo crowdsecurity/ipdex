@@ -1,4 +1,4 @@
-module crowdsecurity/ipdex
+module github.com/crowdsecurity/ipdex
 
 go 1.24.1
 
