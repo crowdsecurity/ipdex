@@ -5,6 +5,7 @@ import (
 	"crowdsecurity/ipdex/cmd/ipdex/style"
 	"crowdsecurity/ipdex/pkg/cti"
 	"crowdsecurity/ipdex/pkg/database"
+	"crowdsecurity/ipdex/pkg/display"
 	"crowdsecurity/ipdex/pkg/report"
 	"crowdsecurity/ipdex/pkg/utils"
 	"strings"
@@ -24,6 +25,7 @@ var (
 )
 
 func SearchCommand(query string, since string, maxResult int) {
+	outputFormat := viper.GetString(config.OutputFormatOption)
 	dbClient, err := database.NewClient(viper.GetString(config.SQLiteDBpathOption))
 	if err != nil {
 		style.Fatalf("unable to init database client: %s", err.Error())
@@ -42,7 +44,13 @@ func SearchCommand(query string, since string, maxResult int) {
 		Query: &query,
 	})
 	itemList := make([]*cticlient.SmokeItem, 0)
-	spinner, _ := pterm.DefaultSpinner.Start("Fetching data...")
+	spinner := &pterm.DefaultSpinner
+	if outputFormat == display.HumanFormat {
+		spinner, err = spinner.Start("Fetching data...")
+		if err != nil {
+			style.Fatalf("unable to start spinner: %s", err.Error())
+		}
+	}
 	ipCache := make(map[string]bool, 0)
 	for {
 		items, err := paginator.Next()
@@ -56,7 +64,9 @@ func SearchCommand(query string, since string, maxResult int) {
 			continue
 		}
 		if err != nil {
-			spinner.Fail("Error fetching data")
+			if outputFormat == display.HumanFormat {
+				spinner.Fail("Error fetching data")
+			}
 			if err.Error() == "unauthorized" {
 				style.Error("\nInvalid API Key.\n")
 				pterm.DefaultParagraph.Printfln("You can generate an API key on the %s", style.Bold.Render("CrowdSec Console"))
@@ -79,7 +89,7 @@ func SearchCommand(query string, since string, maxResult int) {
 		if items == nil {
 			break
 		}
-		if len(items) == 0 {
+		if len(items) == 0 && outputFormat == display.HumanFormat {
 			spinner.Info(fmt.Sprintf("No results found for the query '%s'.", query))
 			os.Exit(0)
 		}
@@ -90,15 +100,17 @@ func SearchCommand(query string, since string, maxResult int) {
 			ipCache[item.Ip] = true
 			itemList = append(itemList, item)
 		}
-		if len(itemList) >= maxResult && maxResult != 0 {
+		if len(itemList) >= maxResult && maxResult != 0 && outputFormat == display.HumanFormat {
 			spinner.UpdateText(fmt.Sprintf("Fetched %d items, stopping...", len(itemList)))
 			break
 		}
-
-		spinner.UpdateText(fmt.Sprintf("Fetched %d items...", len(itemList)))
+		if outputFormat == display.HumanFormat {
+			spinner.UpdateText(fmt.Sprintf("Fetched %d items...", len(itemList)))
+		}
 	}
-
-	spinner.Success("Fetching complete!")
+	if outputFormat == display.HumanFormat {
+		spinner.Success("Fetching complete!")
+	}
 
 	report, err := reportClient.Create(itemList, config.ReportName, false, "", true, query, since)
 	if err != nil {
@@ -108,10 +120,12 @@ func SearchCommand(query string, since string, maxResult int) {
 	if err := reportClient.Display(report, stats, viper.GetString(config.OutputFormatOption), config.Detailed); err != nil {
 		style.Fatal(err.Error())
 	}
-	fmt.Println()
-	style.Infof("Created report with ID '%d'.", report.ID)
-	style.Infof("View report                    ipdex report show %d", report.ID)
-	style.Infof("View all IPs in report         ipdex report show %d -w", report.ID)
+	if outputFormat == display.HumanFormat {
+		fmt.Println()
+		style.Infof("Created report with ID '%d'.", report.ID)
+		style.Infof("View report                    ipdex report show %d", report.ID)
+		style.Infof("View all IPs in report         ipdex report show %d -w", report.ID)
+	}
 }
 
 func NewSearchCommand() *cobra.Command {
