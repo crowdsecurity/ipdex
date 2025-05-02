@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+const (
+	LatestVersion = "v0.0.5"
+)
+
 var (
 	Version   string // = "v0.0.0"
 	BuildDate string // = "2023-03-06_09:55:34"
@@ -16,5 +20,8 @@ func FullString() string {
 }
 
 func String() string {
+	if Version == "" {
+		Version = LatestVersion
+	}
 	return Version
 }
