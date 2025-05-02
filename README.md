@@ -89,7 +89,7 @@ If you already have [Go](https://go.dev/dl/) installed, you can install **ipdex*
 
 
 ```bash
-go install github.com/crowdsecurity/ipdex/cmd/ipdex@v0.0.1
+go install github.com/crowdsecurity/ipdex/cmd/ipdex@latest
 ```
 
 This will download, build, and place the `ipdex` binary into your `$GOBIN` directory (usually `$HOME/go/bin`).
