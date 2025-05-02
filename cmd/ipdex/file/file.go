@@ -153,11 +153,11 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 	if err := reportClient.Display(report, stats, viper.GetString(config.OutputFormatOption), config.Detailed); err != nil {
 		style.Fatal(err.Error())
 	}
-	fmt.Println()
 	if !reportExist && outputFormat == display.HumanFormat {
 		style.Infof("Created report with ID '%d'.", report.ID)
 	}
 	if outputFormat == display.HumanFormat {
+		fmt.Println()
 		style.Infof("View report               ipdex report show %d", report.ID)
 		style.Infof("View all IPs in report    ipdex report show %d -w", report.ID)
 	}
