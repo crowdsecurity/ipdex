@@ -160,7 +160,7 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 	if outputFormat == display.HumanFormat {
 		fmt.Println()
 		style.Infof("View report               ipdex report show %d", report.ID)
-		style.Infof("View all IPs in report    ipdex report show %d -w", report.ID)
+		style.Infof("View all IPs in report    ipdex report show %d d", report.ID)
 	}
 }
 
