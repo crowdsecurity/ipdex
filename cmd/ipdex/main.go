@@ -77,6 +77,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&config.Detailed, "detailed", "d", false, "Show all informations about an IP or a report")
 	rootCmd.PersistentFlags().StringVarP(&config.OutputFormat, "output", "o", "", "Output format: human or json")
 	rootCmd.Flags().StringVarP(&config.ReportName, "name", "n", "", "Report name when scanning a file or making a search query")
+	rootCmd.Flags().BoolVarP(&config.Batching, "batch", "b", false, "Use batching to request the CrowdSec API. Make sure you have a premium API key to use this feature.")
 }
 
 func initConfig() {
@@ -130,6 +131,7 @@ func initConfig() {
 	if viper.GetInt(config.MinIPsWarningOption) == 0 {
 		viper.Set(config.MinIPsWarningOption, config.MinIPsWarningOptionDefaultValue)
 	}
+
 	if !config.IsSupportedOutputFormat(viper.GetString(config.OutputFormatOption)) {
 		style.Fatalf("output format '%s' is not supported", viper.GetString(config.OutputFormatOption))
 	}

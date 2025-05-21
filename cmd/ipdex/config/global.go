@@ -6,4 +6,5 @@ var (
 	Yes          bool
 	Detailed     bool
 	ReportName   string
+	Batching     bool
 )

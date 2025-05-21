@@ -48,7 +48,7 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 	ipsToProcess := make([]string, 0)
 	nbIPToProcess := 0
 	reportExist := true
-	if report == nil || len(report.IPs) == 0 {
+	if report == nil || len(report.IPs) == 0 || config.ForceRefresh {
 		reportExist = false
 	}
 	if !reportExist {
@@ -87,6 +87,7 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 			style.Infof("Report for file '%s' and same checksum already exists, updating it ...", filepath)
 		}
 	}
+
 	if !yes {
 		confirm, err := config.MaxIPsCheck(nbIPToProcess, viper.GetInt(config.MinIPsWarningOption))
 		if err != nil {
@@ -96,49 +97,103 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 			return
 		}
 	}
-	bar := pterm.DefaultProgressbar.WithTotal(len(ipsToProcess)).WithTitle("Processing items")
-
-	if outputFormat == display.HumanFormat {
-		bar, err = bar.Start()
-		if err != nil {
-			style.Fatal(err.Error())
-		}
-	}
-
+	bar := &pterm.ProgressbarPrinter{}
 	ipList := make([]*cticlient.SmokeItem, 0)
-	for _, ipAddr := range ipsToProcess {
+	if !config.Batching {
+		bar = pterm.DefaultProgressbar.WithTotal(len(ipsToProcess)).WithTitle("Processing items")
 		if outputFormat == display.HumanFormat {
-			bar.UpdateTitle("Enriching with CrowdSec CTI: " + ipAddr)
-		}
-		data, _, err := ctiClient.Enrich(ipAddr, forceRefresh)
-		if err != nil {
-			if _, barErr := bar.Stop(); barErr != nil {
-				style.Fatal(barErr.Error())
-			}
-			if err.Error() == "unauthorized" {
-				style.Error("\nInvalid API Key.\n")
-				pterm.DefaultParagraph.Printfln("You can generate an API key on the %s", style.Bold.Render("CrowdSec Console"))
-				style.Blue("→ \"https://app.crowdsec.net/settings/cti-api-keys\"")
-				os.Exit(1)
-			} else if strings.Contains(strings.ToLower(err.Error()), "too many requests") {
-				style.Error("\nYou have exceeded the rate limit. Please try again later. (Rate limit reached)\n")
-				pterm.DefaultParagraph.Printfln("You can upgrade your rate limit on the %s", style.Bold.Render("CrowdSec Console"))
-				style.Blue("→ \"https://app.crowdsec.net/settings/cti-api-keys\"")
-				os.Exit(1)
-			} else if strings.Contains(strings.ToLower(err.Error()), "request quota exceeded") || strings.Contains(strings.ToLower(err.Error()), "limit exceeded") {
-				style.Error("\nYou have exceeded your usage quota.\n")
-				pterm.DefaultParagraph.Printfln("You can upgrade your quotas on the %s", style.Bold.Render("CrowdSec Console"))
-				style.Blue("→ \"https://app.crowdsec.net/settings/cti-api-keys\"")
-				os.Exit(1)
-			} else {
-				style.Fatalf("error getting IP %s information: %s", ipAddr, err)
+			bar, err = bar.Start()
+			if err != nil {
+				style.Fatal(err.Error())
 			}
 		}
-		ipList = append(ipList, data)
+		for _, ipAddr := range ipsToProcess {
+			if outputFormat == display.HumanFormat {
+				bar.UpdateTitle("Enriching with CrowdSec CTI: " + ipAddr)
+			}
+			data, _, err := ctiClient.Enrich(ipAddr, forceRefresh)
+			if err != nil {
+				if _, barErr := bar.Stop(); barErr != nil {
+					style.Fatal(barErr.Error())
+				}
+				if err.Error() == "unauthorized" {
+					style.Error("\nInvalid API Key.\n")
+					pterm.DefaultParagraph.Printfln("You can generate an API key on the %s", style.Bold.Render("CrowdSec Console"))
+					style.Blue("→ \"https://app.crowdsec.net/settings/cti-api-keys\"")
+					os.Exit(1)
+				} else if strings.Contains(strings.ToLower(err.Error()), "too many requests") {
+					style.Error("\nYou have exceeded the rate limit. Please try again later. (Rate limit reached)\n")
+					pterm.DefaultParagraph.Printfln("You can upgrade your rate limit by contacting CrowdSec from the %s", style.Bold.Render("CrowdSec Pricing Page"))
+					style.Blue("→ \"https://www.crowdsec.net/pricing#cyber-threat-intelligence\"")
+					os.Exit(1)
+				} else if strings.Contains(strings.ToLower(err.Error()), "request quota exceeded") || strings.Contains(strings.ToLower(err.Error()), "limit exceeded") {
+					style.Error("\nYou have exceeded your usage quota.\n")
+					pterm.DefaultParagraph.Printfln("You can upgrade your quotas by contacting CrowdSec from the %s", style.Bold.Render("CrowdSec Pricing Page"))
+					style.Blue("→ \"https://www.crowdsec.net/pricing#cyber-threat-intelligence\"")
+					os.Exit(1)
+				} else {
+					style.Fatalf("error getting IP %s information: %s", ipAddr, err)
+				}
+			}
+			ipList = append(ipList, data)
+			if outputFormat == display.HumanFormat {
+				bar.Increment()
+			}
+		}
+	} else {
+		// split the IPs into batches
+		batches := make([][]string, 0)
+		for i := 0; i < len(ipsToProcess); i += config.BatchSize {
+			end := i + config.BatchSize
+			if end > len(ipsToProcess) {
+				end = len(ipsToProcess)
+			}
+			batches = append(batches, ipsToProcess[i:end])
+		}
+		bar := pterm.DefaultProgressbar.WithTotal(len(batches)).WithTitle("Processing batches")
 		if outputFormat == display.HumanFormat {
-			bar.Increment()
+			bar, err = bar.Start()
+			if err != nil {
+				style.Fatal(err.Error())
+			}
+		}
+		for batchIndex, batch := range batches {
+			if outputFormat == display.HumanFormat {
+				bar.UpdateTitle(fmt.Sprintf("Enriching with CrowdSec CTI: batch %d/%d", batchIndex+1, len(batches)))
+			}
+			data, err := ctiClient.EnrichBatch(batch, forceRefresh)
+			if err != nil {
+				if _, barErr := bar.Stop(); barErr != nil {
+					style.Fatal(barErr.Error())
+				}
+				if err.Error() == "unauthorized" {
+					style.Error("\nThe API key is not valid or is not premium and can't be used for batching.\n")
+					pterm.DefaultParagraph.Printfln("You can generate an API key on the %s", style.Bold.Render("CrowdSec Console"))
+					style.Blue("→ \"https://app.crowdsec.net/settings/cti-api-keys\"")
+					pterm.DefaultParagraph.Println("Or contact CrowdSec to upgrade your API")
+					style.Blue("→ \"https://www.crowdsec.net/pricing#cyber-threat-intelligence\"")
+					os.Exit(1)
+				} else if strings.Contains(strings.ToLower(err.Error()), "too many requests") {
+					style.Error("\nYou have exceeded the rate limit. Please try again later. (Rate limit reached)\n")
+					pterm.DefaultParagraph.Printfln("You can upgrade your rate limit by contacting CrowdSec from the %s", style.Bold.Render("CrowdSec Pricing Page"))
+					style.Blue("→ \"https://www.crowdsec.net/pricing#cyber-threat-intelligence\"")
+					os.Exit(1)
+				} else if strings.Contains(strings.ToLower(err.Error()), "request quota exceeded") || strings.Contains(strings.ToLower(err.Error()), "limit exceeded") {
+					style.Error("\nYou have exceeded your usage quota.\n")
+					pterm.DefaultParagraph.Printfln("You can upgrade your quotas by contacting CrowdSec from the %s", style.Bold.Render("CrowdSec Pricing Page"))
+					style.Blue("→ \"https://www.crowdsec.net/pricing#cyber-threat-intelligence\"")
+					os.Exit(1)
+				} else {
+					style.Fatalf("error getting IP batch information: %s", err)
+				}
+			}
+			ipList = append(ipList, data...)
+			if outputFormat == display.HumanFormat {
+				bar.Increment()
+			}
 		}
 	}
+
 	if outputFormat == display.HumanFormat {
 		if _, err := bar.Stop(); err != nil {
 			style.Fatal(err.Error())

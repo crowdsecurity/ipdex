@@ -30,6 +30,7 @@ type CTI struct {
 
 type CrowdsecClient interface {
 	GetIPInfo(ip string) (*cticlient.SmokeItem, error)
+	SearchIPs(ipAddrs []string) (*cticlient.SearchIPResponse, error)
 }
 
 func NewCTIClient(apiKey string, dbClient database.IPClient) (*CTI, error) {
@@ -43,6 +44,47 @@ func NewCTIClient(apiKey string, dbClient database.IPClient) (*CTI, error) {
 			Timeout: timeout,
 		},
 	}, nil
+}
+
+func (c *CTI) EnrichBatch(ipAddrs []string, forceRefresh bool) ([]*cticlient.SmokeItem, error) {
+	var data []*cticlient.SmokeItem
+
+	// Check if the IPs are in the database, and remove them from the list if they are
+	for i := 0; i < len(ipAddrs); {
+		item, err := c.db.Find(ipAddrs[i])
+		if err != nil {
+			continue
+		}
+		if item != nil && !forceRefresh {
+			data = append(data, item)
+			ipAddrs = append(ipAddrs[:i], ipAddrs[i+1:]...)
+		} else {
+			i++
+		}
+	}
+
+	ipRestCache := make(map[string]bool)
+
+	// Check the remaining IPs in the list
+	items, err := c.client.SearchIPs(ipAddrs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range items.Items {
+		data = append(data, &item)
+		if item.Ip != "" {
+			ipRestCache[item.Ip] = true
+		}
+	}
+
+	// Account for missing IPs
+	for _, ip := range ipAddrs {
+		if _, ok := ipRestCache[ip]; !ok {
+			data = append(data, &cticlient.SmokeItem{Ip: ip})
+		}
+	}
+	return data, nil
 }
 
 func (c *CTI) Enrich(ipAddr string, forceRefresh bool) (*cticlient.SmokeItem, bool, error) {
