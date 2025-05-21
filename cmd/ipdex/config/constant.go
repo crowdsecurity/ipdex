@@ -7,4 +7,5 @@ const (
 	ReportExpirationDefaultValue    = "90d"
 	DefaultSQLiteDBFile             = "ipdex.sqlite"
 	DefaultFormat                   = display.HumanFormat
+	BatchSize                       = 100
 )
