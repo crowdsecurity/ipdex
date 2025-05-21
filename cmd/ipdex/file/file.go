@@ -97,17 +97,16 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 			return
 		}
 	}
-	bar := pterm.DefaultProgressbar.WithTotal(len(ipsToProcess)).WithTitle("Processing items")
-
-	if outputFormat == display.HumanFormat {
-		bar, err = bar.Start()
-		if err != nil {
-			style.Fatal(err.Error())
-		}
-	}
-
+	bar := &pterm.ProgressbarPrinter{}
 	ipList := make([]*cticlient.SmokeItem, 0)
 	if !config.Batching {
+		bar = pterm.DefaultProgressbar.WithTotal(len(ipsToProcess)).WithTitle("Processing items")
+		if outputFormat == display.HumanFormat {
+			bar, err = bar.Start()
+			if err != nil {
+				style.Fatal(err.Error())
+			}
+		}
 		for _, ipAddr := range ipsToProcess {
 			if outputFormat == display.HumanFormat {
 				bar.UpdateTitle("Enriching with CrowdSec CTI: " + ipAddr)
@@ -151,9 +150,16 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 			}
 			batches = append(batches, ipsToProcess[i:end])
 		}
+		bar := pterm.DefaultProgressbar.WithTotal(len(batches)).WithTitle("Processing batches")
+		if outputFormat == display.HumanFormat {
+			bar, err = bar.Start()
+			if err != nil {
+				style.Fatal(err.Error())
+			}
+		}
 		for batchIndex, batch := range batches {
 			if outputFormat == display.HumanFormat {
-				bar.UpdateTitle(fmt.Sprintf("Enriching with CrowdSec CTI: %d/%d", batchIndex+1, len(batches)))
+				bar.UpdateTitle(fmt.Sprintf("Enriching with CrowdSec CTI: batch %d/%d", batchIndex+1, len(batches)))
 			}
 			data, err := ctiClient.EnrichBatch(batch, forceRefresh)
 			if err != nil {
