@@ -5,12 +5,12 @@ import (
 )
 
 const (
-	LatestVersion = "v0.0.5"
+	LatestVersion = "v0.0.6"
 )
 
 var (
-	Version   string // = "v0.0.0"
-	BuildDate string // = "2023-03-06_09:55:34"
+	Version   string
+	BuildDate string
 	Commit    string
 )
 
