@@ -3,8 +3,10 @@ package database
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/config"
 	"gorm.io/gorm"
 )
 
@@ -102,10 +104,19 @@ func (r *ReportClient) Create(report *Report) error {
 		report.FileHash = hash
 	}
 
-	result := r.db.Create(report)
+	result := r.db.Omit("IPs.*").Create(report)
 	if result.Error != nil {
 		return result.Error
 	}
+
+	allIPs := report.IPs
+	for batch := range slices.Chunk(allIPs, config.BatchSize) {
+		report.IPs = batch
+		if err := r.db.Model(report).Association("IPs").Append(batch); err != nil {
+			return fmt.Errorf("failed to associate IPs with report: %w", err)
+		}
+	}
+
 	return nil
 }
 
