@@ -104,25 +104,16 @@ func (r *ReportClient) Create(report *Report) error {
 		report.FileHash = hash
 	}
 
-	if config.Batching {
+	result := r.db.Omit("IPs.*").Create(report)
+	if result.Error != nil {
+		return result.Error
+	}
 
-		result := r.db.Omit("IPs.*").Create(report)
-		if result.Error != nil {
-			return result.Error
-		}
-
-		ipSaved := report.IPs
-
-		for batch := range slices.Chunk(ipSaved, config.BatchSize) {
-			report.IPs = batch
-			if err := r.db.Model(report).Association("IPs").Append(batch); err != nil {
-				return fmt.Errorf("failed to associate IPs with report: %w", err)
-			}
-		}
-	} else {
-		result := r.db.Create(report)
-		if result.Error != nil {
-			return result.Error
+	allIPs := report.IPs
+	for batch := range slices.Chunk(allIPs, config.BatchSize) {
+		report.IPs = batch
+		if err := r.db.Model(report).Association("IPs").Append(batch); err != nil {
+			return fmt.Errorf("failed to associate IPs with report: %w", err)
 		}
 	}
 

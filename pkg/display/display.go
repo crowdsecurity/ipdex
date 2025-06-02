@@ -118,6 +118,15 @@ func displayIP(item *cticlient.SmokeItem, ipLastRefresh time.Time, detailed bool
 		reputationStr += fmt.Sprintf(" (%s)", fps)
 	}
 
+	if item.History.FirstSeen == nil {
+		item.History.FirstSeen = new(string)
+		*item.History.FirstSeen = "N/A"
+	}
+	if item.History.LastSeen == nil {
+		item.History.LastSeen = new(string)
+		*item.History.LastSeen = "N/A"
+	}
+
 	rd.PrintRow("IP", item.Ip, keyStyle, valueStyle)
 	rd.PrintRow("Reputation", reputationStr, keyStyle, GetReputationStyle(levelStyle, item.Reputation))
 	rd.PrintRow("Confidence", item.Confidence, keyStyle, GetLevelStyle(levelStyle, item.Reputation))
