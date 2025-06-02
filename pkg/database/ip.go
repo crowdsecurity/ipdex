@@ -74,15 +74,14 @@ func (i *IPClient) CreateBatch(ips []*cticlient.SmokeItem) ([]IP, error) {
 			return nil, fmt.Errorf("unable to marshal cti data: %s", err.Error())
 		}
 		record := IP{Value: ip.Ip, CtiData: string(data)}
-		ret = append(ret, record)
 		result := i.db.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "value"}}, // Conflict on 'value' column
 			DoUpdates: clause.Assignments(map[string]interface{}{"cti_data": record.CtiData, "updated_at": gorm.Expr("CURRENT_TIMESTAMP")}),
 		}).Create(&record)
-		ret = append(ret, record)
 		if result.Error != nil {
 			return ret, result.Error
 		}
+		ret = append(ret, record)
 	}
 	return ret, nil
 }
