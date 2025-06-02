@@ -2,10 +2,11 @@ package version
 
 import (
 	"fmt"
+	"runtime/debug"
 )
 
 const (
-	LatestVersion = "v0.0.8"
+	LatestVersion = "v0.0.10"
 )
 
 var (
@@ -20,6 +21,11 @@ func FullString() string {
 }
 
 func String() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if Version == "" {
+			Version = info.Main.Version
+		}
+	}
 	if Version == "" {
 		Version = LatestVersion
 	}
