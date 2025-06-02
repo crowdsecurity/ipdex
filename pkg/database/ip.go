@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/crowdsecurity/crowdsec/pkg/cticlient"
-	"github.com/crowdsecurity/ipdex/cmd/ipdex/config"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -76,18 +75,14 @@ func (i *IPClient) CreateBatch(ips []*cticlient.SmokeItem) ([]IP, error) {
 		}
 		record := IP{Value: ip.Ip, CtiData: string(data)}
 		ret = append(ret, record)
-		//result := i.db.Clauses(clause.OnConflict{
-		//	Columns:   []clause.Column{{Name: "value"}}, // Conflict on 'value' column
-		//	DoUpdates: clause.Assignments(map[string]interface{}{"cti_data": record.CtiData, "updated_at": gorm.Expr("CURRENT_TIMESTAMP")}),
-		//}).Create(&record)
-		//ret = append(ret, record)
-		//if result.Error != nil {
-		//	return ret, result.Error
-		//}
-	}
-	err := i.db.CreateInBatches(&ret, config.BatchSize)
-	if err != nil {
-		return ret, err.Error
+		result := i.db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "value"}}, // Conflict on 'value' column
+			DoUpdates: clause.Assignments(map[string]interface{}{"cti_data": record.CtiData, "updated_at": gorm.Expr("CURRENT_TIMESTAMP")}),
+		}).Create(&record)
+		ret = append(ret, record)
+		if result.Error != nil {
+			return ret, result.Error
+		}
 	}
 	return ret, nil
 }

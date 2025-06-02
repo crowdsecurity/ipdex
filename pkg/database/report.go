@@ -110,36 +110,15 @@ func (r *ReportClient) Create(report *Report) error {
 		if result.Error != nil {
 			return result.Error
 		}
-		//result := r.db.Create(report)
-		//if result.Error != nil {
-		//	return result.Error
-		//}
 
-		fmt.Printf("Report created with IDDDDDDDD: %d\n", report.ID)
+		ipSaved := report.IPs
 
-		for batch := range slices.Chunk(report.IPs, 10) {
-			fmt.Printf("Processing batch of %d IPs for report ID: %d\n", len(batch), report.ID)
+		for batch := range slices.Chunk(ipSaved, config.BatchSize) {
+			report.IPs = batch
 			if err := r.db.Model(report).Association("IPs").Append(batch); err != nil {
 				return fmt.Errorf("failed to associate IPs with report: %w", err)
 			}
-			fmt.Printf("Associated %d IPs with report ID: %d\n", len(batch), report.ID)
-			break
 		}
-
-		//if len(report.IPs) > 0 {
-		//	for i := 0; i < len(report.IPs); i += 1 {
-		//		fmt.Printf("i = %d, len(report.IPs) = %d, futur i = %d\n", i, len(report.IPs), i+1)
-		//		end := i + 1
-		//		if end > len(report.IPs) {
-		//			end = len(report.IPs)
-		//		}
-		//		batch := report.IPs[i:end]
-		//		if err := r.db.Model(report).Association("IPs").Append(batch); err != nil {
-		//			return fmt.Errorf("failed to associate IPs with report: %w", err)
-		//		}
-		//		fmt.Printf("Associated %d IPs with report ID: %d\n", len(batch), report.ID)
-		//	}
-		//}
 	} else {
 		result := r.db.Create(report)
 		if result.Error != nil {
