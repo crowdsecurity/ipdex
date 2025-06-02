@@ -78,10 +78,10 @@ func (i *IPClient) CreateBatch(ips []*cticlient.SmokeItem) ([]IP, error) {
 			Columns:   []clause.Column{{Name: "value"}}, // Conflict on 'value' column
 			DoUpdates: clause.Assignments(map[string]interface{}{"cti_data": record.CtiData, "updated_at": gorm.Expr("CURRENT_TIMESTAMP")}),
 		}).Create(&record)
+		ret = append(ret, record)
 		if result.Error != nil {
 			return ret, result.Error
 		}
-		ret = append(ret, record)
 	}
 	return ret, nil
 }
