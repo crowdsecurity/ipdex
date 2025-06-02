@@ -1,8 +1,7 @@
 package config
 
 import (
-	"os"
-	"path/filepath"
+	"github.com/kirsle/configdir"
 
 	"github.com/crowdsecurity/ipdex/pkg/display"
 )
@@ -20,19 +19,21 @@ var CacheFolder string
 var ConfigFolder string
 
 func GetCacheFolder() (string, error) {
-	home, err := os.UserHomeDir()
+	cachePath := configdir.LocalCache("ipdex")
+	err := configdir.MakePath(cachePath)
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".cache", "ipdex"), nil
+	return cachePath, nil
 }
 
 func GetConfigFolder() (string, error) {
-	home, err := os.UserHomeDir()
+	configPath := configdir.LocalConfig("ipdex")
+	err := configdir.MakePath(configPath)
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "ipdex"), nil
+	return configPath, nil
 }
 
 func IsSupportedOutputFormat(outputFormat string) bool {
