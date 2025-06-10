@@ -22,15 +22,16 @@ type Report struct {
 }
 
 type ReportStats struct {
-	NbIPs              int
-	TopReputation      map[string]int
-	TopBehaviors       map[string]int
-	TopClassifications map[string]int
-	TopCountries       map[string]int
-	TopCVEs            map[string]int
-	TopAS              map[string]int
-	TopIPRange         map[string]int
-	TopBlocklists      map[string]int
-	NbUnknownIPs       int
-	AverageBNScore     float64
+	NbIPs                 int
+	TopReputation         map[string]int
+	TopBehaviors          map[string]int
+	TopClassifications    map[string]int
+	TopCountries          map[string]int
+	TopCVEs               map[string]int
+	TopAS                 map[string]int
+	TopIPRange            map[string]int
+	TopBlocklists         map[string]int
+	NbUnknownIPs          int
+	AverageBNScore        float64
+	IPsBlockedByBlocklist int
 }
