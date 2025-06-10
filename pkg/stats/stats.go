@@ -8,17 +8,18 @@ import (
 
 func GetIPsStats(ips []*cticlient.SmokeItem) *models.ReportStats {
 	stats := &models.ReportStats{
-		NbIPs:              0,
-		NbUnknownIPs:       0,
-		TopReputation:      make(map[string]int, 0),
-		TopBehaviors:       make(map[string]int, 0),
-		TopClassifications: make(map[string]int, 0),
-		TopCountries:       make(map[string]int, 0),
-		TopAS:              make(map[string]int, 0),
-		TopCVEs:            make(map[string]int, 0),
-		TopIPRange:         make(map[string]int, 0),
-		TopBlocklists:      make(map[string]int, 0),
-		AverageBNScore:     0.0,
+		NbIPs:                 0,
+		NbUnknownIPs:          0,
+		TopReputation:         make(map[string]int, 0),
+		TopBehaviors:          make(map[string]int, 0),
+		TopClassifications:    make(map[string]int, 0),
+		TopCountries:          make(map[string]int, 0),
+		TopAS:                 make(map[string]int, 0),
+		TopCVEs:               make(map[string]int, 0),
+		TopIPRange:            make(map[string]int, 0),
+		TopBlocklists:         make(map[string]int, 0),
+		AverageBNScore:        0.0,
+		IPsBlockedByBlocklist: 0,
 	}
 	sumBNScore := 0
 
@@ -89,6 +90,7 @@ func GetIPsStats(ips []*cticlient.SmokeItem) *models.ReportStats {
 				}
 				stats.TopBlocklists[blocklist.Label] += 1
 			}
+			stats.IPsBlockedByBlocklist += 1
 		}
 
 		if len(ip.CVEs) > 0 {
