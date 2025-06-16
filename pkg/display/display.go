@@ -353,8 +353,9 @@ func displayReport(report *models.Report, stats *models.ReportStats, withIPs boo
 	rd.PrintRow("Number of IPs", strconv.Itoa(len(report.IPs)), keyStyle, valueStyle)
 
 	knownIPPercent := float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
+	ipsInBlocklistPercent := float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
 	rd.PrintRow("Number of known IPs", fmt.Sprintf("%d (%.0f%%)", stats.NbIPs-stats.NbUnknownIPs, knownIPPercent), keyStyle, GetPercentKnownColor(valueStyle, knownIPPercent))
-
+	rd.PrintRow("Number of IPs in Blocklist", fmt.Sprintf("%d (%.0f%%)", stats.IPsBlockedByBlocklist, ipsInBlocklistPercent), keyStyle, GetPercentKnownColor(valueStyle, knownIPPercent))
 	PrintSection(sectionStyle, "Stats")
 
 	topWriter := tabwriter.NewWriter(os.Stdout, 0, 8, 10, '\t', tabwriter.AlignRight)
