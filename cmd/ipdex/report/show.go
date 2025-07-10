@@ -54,7 +54,7 @@ func NewShowCommand() *cobra.Command {
 			} else {
 				style.Fatal("Please provide a report ID or file used in the report you want to show with `ipdex report show 1`")
 			}
-			if err := reportClient.Display(report, report.Stats, viper.GetString(config.OutputFormatOption), config.Detailed); err != nil {
+			if err := reportClient.Display(report, report.Stats, viper.GetString(config.OutputFormatOption), config.Detailed, config.OutputFilePath); err != nil {
 				style.Fatal(err.Error())
 			}
 			fmt.Println()

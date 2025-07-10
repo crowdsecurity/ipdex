@@ -118,7 +118,7 @@ func SearchCommand(query string, since string, maxResult int) {
 		style.Fatalf("unable to create report: %s", err)
 	}
 	stats := reportClient.GetStats(report)
-	if err := reportClient.Display(report, stats, viper.GetString(config.OutputFormatOption), config.Detailed); err != nil {
+	if err := reportClient.Display(report, stats, viper.GetString(config.OutputFormatOption), config.Detailed, config.OutputFilePath); err != nil {
 		style.Fatal(err.Error())
 	}
 	if outputFormat == display.HumanFormat {

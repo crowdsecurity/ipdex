@@ -197,9 +197,9 @@ func (r *ReportClient) GetExpiredIPFromReport(reportID uint) ([]string, error) {
 	return ret, nil
 }
 
-func (r *ReportClient) Display(report *models.Report, stats *models.ReportStats, outputFormat string, withIPs bool) error {
+func (r *ReportClient) Display(report *models.Report, stats *models.ReportStats, outputFormat string, withIPs bool, outputFilePath string) error {
 	displayer := display.NewDisplay()
-	return displayer.DisplayReport(report, stats, outputFormat, withIPs)
+	return displayer.DisplayReport(report, stats, outputFormat, withIPs, outputFilePath)
 }
 
 func (r *ReportClient) DeleteExpiredReports(expiration string) error {
