@@ -502,7 +502,7 @@ func displayReport(report *models.Report, stats *models.ReportStats, withIPs boo
 			}
 			behaviors := ""
 			for i, behavior := range item.Behaviors {
-				if len(behaviors)+len(behavior.Label) > maxKeyLength {
+				if len(behaviors)+len(behavior.Label) > maxLineLength {
 					behaviors += "..."
 					break
 				}
