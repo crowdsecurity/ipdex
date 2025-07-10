@@ -582,205 +582,134 @@ func saveReportCSV(item *models.Report, stats *models.ReportStats, withIPs bool)
 	reportWriter := csv.NewWriter(reportFile)
 	defer reportWriter.Flush()
 
-	// General section
-	if err := reportWriter.Write([]string{"General", "", ""}); err != nil {
-		return err
-	}
-	if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-		return err
-	}
+	// Collect all CSV rows
+	var csvRows [][]string
 
-	if err := reportWriter.Write([]string{"Report ID", strconv.Itoa(int(item.ID)), ""}); err != nil {
-		return err
-	}
-	if err := reportWriter.Write([]string{"Report Name", item.Name, ""}); err != nil {
-		return err
-	}
-	if err := reportWriter.Write([]string{"Creation Date", item.CreatedAt.Format("2006-01-02 15:04:05"), ""}); err != nil {
-		return err
-	}
+	// General section
+	csvRows = append(csvRows, []string{"General", "", ""})
+	csvRows = append(csvRows, []string{"", "", ""})
+	csvRows = append(csvRows, []string{"Report ID", strconv.Itoa(int(item.ID)), ""})
+	csvRows = append(csvRows, []string{"Report Name", item.Name, ""})
+	csvRows = append(csvRows, []string{"Creation Date", item.CreatedAt.Format("2006-01-02 15:04:05"), ""})
 
 	if item.IsFile {
-		if err := reportWriter.Write([]string{"File path", item.FilePath, ""}); err != nil {
-			return err
-		}
-		if err := reportWriter.Write([]string{"SHA256", item.FileHash, ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"File path", item.FilePath, ""})
+		csvRows = append(csvRows, []string{"SHA256", item.FileHash, ""})
 	}
 
 	if item.IsQuery {
-		if err := reportWriter.Write([]string{"Query", item.Query, ""}); err != nil {
-			return err
-		}
-		if err := reportWriter.Write([]string{"Since Duration", item.Since, ""}); err != nil {
-			return err
-		}
-		if err := reportWriter.Write([]string{"Since Time", item.SinceTime.Format("2006-01-02 15:04:05"), ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"Query", item.Query, ""})
+		csvRows = append(csvRows, []string{"Since Duration", item.Since, ""})
+		csvRows = append(csvRows, []string{"Since Time", item.SinceTime.Format("2006-01-02 15:04:05"), ""})
 	}
 
-	if err := reportWriter.Write([]string{"Number of IPs", strconv.Itoa(len(item.IPs)), ""}); err != nil {
-		return err
-	}
+	csvRows = append(csvRows, []string{"Number of IPs", strconv.Itoa(len(item.IPs)), ""})
 
 	knownIPPercent := float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
 	ipsInBlocklistPercent := float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
 
-	if err := reportWriter.Write([]string{"Number of known IPs", fmt.Sprintf("%d", stats.NbIPs-stats.NbUnknownIPs), fmt.Sprintf("%.0f%%", knownIPPercent)}); err != nil {
-		return err
-	}
-	if err := reportWriter.Write([]string{"Number of IPs in Blocklist", fmt.Sprintf("%d", stats.IPsBlockedByBlocklist), fmt.Sprintf("%.0f%%", ipsInBlocklistPercent)}); err != nil {
-		return err
-	}
+	csvRows = append(csvRows, []string{"Number of known IPs", fmt.Sprintf("%d", stats.NbIPs-stats.NbUnknownIPs), fmt.Sprintf("%.0f%%", knownIPPercent)})
+	csvRows = append(csvRows, []string{"Number of IPs in Blocklist", fmt.Sprintf("%d", stats.IPsBlockedByBlocklist), fmt.Sprintf("%.0f%%", ipsInBlocklistPercent)})
 
 	// Empty line before Stats section
-	if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-		return err
-	}
+	csvRows = append(csvRows, []string{"", "", ""})
 
 	// Stats section
-	if err := reportWriter.Write([]string{"Stats", "", ""}); err != nil {
-		return err
-	}
-	if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-		return err
-	}
+	csvRows = append(csvRows, []string{"Stats", "", ""})
+	csvRows = append(csvRows, []string{"", "", ""})
 
 	// Top Reputation
 	TopReputation := getTopN(stats.TopReputation, maxTopDisplayReport)
 	if len(TopReputation) > 0 {
-		if err := reportWriter.Write([]string{"🌟 Top Reputation", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"🌟 Top Reputation", "", ""})
 		for _, stat := range TopReputation {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			if err := reportWriter.Write([]string{cases.Title(language.Und).String(stat.Key), fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)}); err != nil {
-				return err
-			}
+			csvRows = append(csvRows, []string{cases.Title(language.Und).String(stat.Key), fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"", "", ""})
 	}
 
 	// Top Classifications
 	topClassification := getTopN(stats.TopClassifications, maxTopDisplayReport)
 	if len(topClassification) > 0 {
-		if err := reportWriter.Write([]string{"🗂️ Top Classifications", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"🗂️ Top Classifications", "", ""})
 		for _, stat := range topClassification {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			if err := reportWriter.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)}); err != nil {
-				return err
-			}
+			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"", "", ""})
 	}
 
 	// Top Behaviors
 	topBehaviors := getTopN(stats.TopBehaviors, maxTopDisplayReport)
 	if len(topBehaviors) > 0 {
-		if err := reportWriter.Write([]string{"🤖 Top Behaviors", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"🤖 Top Behaviors", "", ""})
 		for _, stat := range topBehaviors {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			if err := reportWriter.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)}); err != nil {
-				return err
-			}
+			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"", "", ""})
 	}
 
 	// Top Blocklists
 	topBlocklists := getTopN(stats.TopBlocklists, maxTopDisplayReport)
 	if len(topBlocklists) > 0 {
-		if err := reportWriter.Write([]string{"⛔ Top Blocklists", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"⛔ Top Blocklists", "", ""})
 		for _, stat := range topBlocklists {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			if err := reportWriter.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)}); err != nil {
-				return err
-			}
+			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"", "", ""})
 	}
 
 	// Top CVEs
 	topCVEs := getTopN(stats.TopCVEs, maxTopDisplayReport)
 	if len(topCVEs) > 0 {
-		if err := reportWriter.Write([]string{"💥 Top CVEs", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"💥 Top CVEs", "", ""})
 		for _, stat := range topCVEs {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			if err := reportWriter.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)}); err != nil {
-				return err
-			}
+			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"", "", ""})
 	}
 
 	// Top IP Ranges
 	TopIPRange := getTopN(stats.TopIPRange, maxTopDisplayReport)
 	if len(TopIPRange) > 0 {
-		if err := reportWriter.Write([]string{"🌐 Top IP Ranges", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"🌐 Top IP Ranges", "", ""})
 		for _, stat := range TopIPRange {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			if err := reportWriter.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)}); err != nil {
-				return err
-			}
+			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"", "", ""})
 	}
 
 	// Top Autonomous Systems
 	topAS := getTopN(stats.TopAS, maxTopDisplayReport)
 	if len(topAS) > 0 {
-		if err := reportWriter.Write([]string{"🛰️ Top Autonomous Systems", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"🛰️ Top Autonomous Systems", "", ""})
 		for _, stat := range topAS {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			if err := reportWriter.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)}); err != nil {
-				return err
-			}
+			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"", "", ""})
 	}
 
 	// Top Countries
 	topCountry := getTopN(stats.TopCountries, maxTopDisplayReport)
 	if len(topCountry) > 0 {
-		if err := reportWriter.Write([]string{"🌎 Top Countries", "", ""}); err != nil {
-			return err
-		}
+		csvRows = append(csvRows, []string{"🌎 Top Countries", "", ""})
 		for _, stat := range topCountry {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			if err := reportWriter.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)}); err != nil {
-				return err
-			}
+			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		if err := reportWriter.Write([]string{"", "", ""}); err != nil {
-			return err
+		csvRows = append(csvRows, []string{"", "", ""})
+	}
+
+	// Write all rows at once
+	for _, row := range csvRows {
+		if err := reportWriter.Write(row); err != nil {
+			return fmt.Errorf("failed to write CSV row: %v", err)
 		}
 	}
 
@@ -798,24 +727,16 @@ func saveReportCSV(item *models.Report, stats *models.ReportStats, withIPs bool)
 		detailsWriter := csv.NewWriter(detailsFile)
 		defer detailsWriter.Flush()
 
-		// Write the header for IP details
-		if err := detailsWriter.Write([]string{
-			"IP",
-			"Country",
-			"AS Name",
-			"Reputation",
-			"Confidence",
-			"Reverse DNS",
-			"Profile",
-			"Behaviors",
-			"Range",
-			"First Seen",
-			"Last Seen",
-		}); err != nil {
-			return err
-		}
+		// Collect all IP detail rows
+		var detailRows [][]string
 
-		// Write IP data
+		// Header
+		detailRows = append(detailRows, []string{
+			"IP", "Country", "AS Name", "Reputation", "Confidence",
+			"Reverse DNS", "Profile", "Behaviors", "Range", "First Seen", "Last Seen",
+		})
+
+		// IP data
 		for _, ipItem := range item.IPs {
 			country := "N/A"
 			ipRange := "N/A"
@@ -877,20 +798,16 @@ func saveReportCSV(item *models.Report, stats *models.ReportStats, withIPs bool)
 				confidence = "N/A"
 			}
 
-			if err := detailsWriter.Write([]string{
-				ipItem.Ip,
-				country,
-				asName,
-				reputation,
-				confidence,
-				reverseDNS,
-				classif,
-				behaviors,
-				ipRange,
-				firstSeen,
-				lastSeen,
-			}); err != nil {
-				return err
+			detailRows = append(detailRows, []string{
+				ipItem.Ip, country, asName, reputation, confidence,
+				reverseDNS, classif, behaviors, ipRange, firstSeen, lastSeen,
+			})
+		}
+
+		// Write all detail rows at once
+		for _, row := range detailRows {
+			if err := detailsWriter.Write(row); err != nil {
+				return fmt.Errorf("failed to write detail CSV row: %v", err)
 			}
 		}
 
