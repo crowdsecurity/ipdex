@@ -470,7 +470,7 @@ func displayReport(report *models.Report, stats *models.ReportStats, withIPs boo
 		topWriter.Flush()
 	}
 	fmt.Println()
-
+	maxLineLength := 25
 	if withIPs {
 		var tableData [][]string
 		tableData = append(tableData, []string{"IP", "Country", "AS Name", "Reputation", "Confidence", "Reverse DNS", "Profile", "Behaviors", "Range"})
@@ -481,8 +481,8 @@ func displayReport(report *models.Report, stats *models.ReportStats, withIPs boo
 			reverseDNS := "N/A"
 			if item.ReverseDNS != nil && *item.ReverseDNS != "" {
 				reverseDNS = *item.ReverseDNS
-				if len(reverseDNS) > maxKeyLength {
-					reverseDNS = "..." + reverseDNS[len(reverseDNS)-maxKeyLength:]
+				if len(reverseDNS) > maxLineLength {
+					reverseDNS = "..." + reverseDNS[len(reverseDNS)-maxLineLength:]
 				}
 			}
 			if item.Location.Country != nil && *item.Location.Country != "" {
@@ -496,8 +496,8 @@ func displayReport(report *models.Report, stats *models.ReportStats, withIPs boo
 			}
 			if item.AsName != nil && *item.AsName != "" {
 				asName = *item.AsName
-				if len(asName) > maxKeyLength {
-					asName = asName[:maxKeyLength] + "..."
+				if len(asName) > maxLineLength {
+					asName = asName[:maxLineLength] + "..."
 				}
 			}
 			behaviors := ""
@@ -513,7 +513,7 @@ func displayReport(report *models.Report, stats *models.ReportStats, withIPs boo
 				}
 				behaviors += behavior.Label
 
-				if i+1 < len(item.Behaviors) && len(behaviors)+len(item.Behaviors[i+1].Label)+2 > maxKeyLength {
+				if i+1 < len(item.Behaviors) && len(behaviors)+len(item.Behaviors[i+1].Label)+2 > maxLineLength {
 					behaviors += "..."
 					break
 				}
@@ -589,7 +589,7 @@ func saveReportCSV(item *models.Report, stats *models.ReportStats, withIPs bool)
 	if err := reportWriter.Write([]string{"", "", ""}); err != nil {
 		return err
 	}
-	
+
 	if err := reportWriter.Write([]string{"Report ID", strconv.Itoa(int(item.ID)), ""}); err != nil {
 		return err
 	}
@@ -599,7 +599,7 @@ func saveReportCSV(item *models.Report, stats *models.ReportStats, withIPs bool)
 	if err := reportWriter.Write([]string{"Creation Date", item.CreatedAt.Format("2006-01-02 15:04:05"), ""}); err != nil {
 		return err
 	}
-	
+
 	if item.IsFile {
 		if err := reportWriter.Write([]string{"File path", item.FilePath, ""}); err != nil {
 			return err
@@ -608,7 +608,7 @@ func saveReportCSV(item *models.Report, stats *models.ReportStats, withIPs bool)
 			return err
 		}
 	}
-	
+
 	if item.IsQuery {
 		if err := reportWriter.Write([]string{"Query", item.Query, ""}); err != nil {
 			return err
@@ -620,14 +620,14 @@ func saveReportCSV(item *models.Report, stats *models.ReportStats, withIPs bool)
 			return err
 		}
 	}
-	
+
 	if err := reportWriter.Write([]string{"Number of IPs", strconv.Itoa(len(item.IPs)), ""}); err != nil {
 		return err
 	}
-	
+
 	knownIPPercent := float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
 	ipsInBlocklistPercent := float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
-	
+
 	if err := reportWriter.Write([]string{"Number of known IPs", fmt.Sprintf("%d", stats.NbIPs-stats.NbUnknownIPs), fmt.Sprintf("%.0f%%", knownIPPercent)}); err != nil {
 		return err
 	}
