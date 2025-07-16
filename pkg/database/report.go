@@ -99,14 +99,14 @@ func (r *ReportClient) Create(report *Report) error {
 	if report.IsFile {
 		hash, err := ComputeFileHash(report.FilePath)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to compute file hash: %w", err)
 		}
 		report.FileHash = hash
 	}
 
-	result := r.db.Omit("IPs.*").Create(report)
+	result := r.db.Omit("IPs").Create(report)
 	if result.Error != nil {
-		return result.Error
+		return fmt.Errorf("creating report in database failed: %v", result.Error)
 	}
 
 	allIPs := report.IPs
