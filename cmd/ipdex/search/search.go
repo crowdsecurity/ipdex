@@ -55,7 +55,7 @@ func SearchCommand(query string, since string, maxResult int) {
 	ipCache := make(map[string]bool, 0)
 	for {
 		items, err := paginator.Next()
-		if err != nil && strings.Contains(strings.ToLower(err.Error()), "too much ips requested") {
+		if err != nil && (strings.Contains(strings.ToLower(err.Error()), "too much ips requested") || strings.Contains(strings.ToLower(err.Error()), "unexpected http code : 400 bad request")) {
 			Limit = 10
 			paginator = cti.NewSearchPaginator(ctiClient, cti.SearchParams{
 				Since: &since,
