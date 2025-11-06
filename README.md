@@ -153,8 +153,12 @@ ipdex 1.2.3.4
 
 ```bash
 ipdex file ips.txt
+ipdex file -b ips.txt
 ipdex file /var/log/nginx.log
 ```
+
+> [!IMPORTANT]
+> `-b` allows you to do batch queries and is useful when processing files that can have a lot of IPs.
 
 ---
 
