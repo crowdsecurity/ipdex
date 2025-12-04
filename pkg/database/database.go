@@ -13,7 +13,7 @@ type Client struct {
 
 func NewClient(sqliteDBPath string) (*Client, error) {
 	client := &Client{}
-	db, err := gorm.Open(sqlite.Open(sqliteDBPath), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
+	db, err := gorm.Open(sqlite.Open(sqliteDBPath), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		return client, err
 	}
