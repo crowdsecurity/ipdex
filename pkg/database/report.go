@@ -74,7 +74,6 @@ func (r *ReportClient) FindById(reportID uint) (*Report, error) {
 		return nil, result.Error
 	}
 
-	// Load IPs using Association API
 	err := r.db.Model(&report).Association("IPs").Find(&report.IPs)
 	if err != nil {
 		return nil, err
@@ -99,7 +98,6 @@ func (r *ReportClient) FindByHash(filepath string) (*Report, error) {
 		return nil, result.Error
 	}
 
-	// Load IPs using Association API
 	err = r.db.Model(&report).Association("IPs").Find(&report.IPs)
 	if err != nil {
 		return nil, err
@@ -193,7 +191,6 @@ func (r *ReportClient) FilePathExist(filePath string) (*Report, bool, error) {
 		return nil, false, nil
 	}
 
-	// Load IPs using Association API
 	err := r.db.Model(&reports[0]).Association("IPs").Find(&reports[0].IPs)
 	if err != nil {
 		return nil, false, err
