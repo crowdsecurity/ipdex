@@ -149,12 +149,16 @@ Enter your API key and set your preferences.
 ipdex 1.2.3.4
 ```
 
+<p align="center"> <img src="img/ipdex_single_ip.svg" alt="ipdex querying a single IP" width="900" /> </p>
+
 ### 5. Scan a file
 
 ```bash
 ipdex file ips.txt
 ipdex file /var/log/nginx.log
 ```
+
+<p align="center"> <img src="img/ipdex_file.svg" alt="ipdex scanning a file" width="900" /> </p>
 
 ---
 
@@ -258,6 +262,7 @@ By default, the `since` parameter is set to `30d`.
 
 ⚠️ Each queried page counts as 1 quota.
 
+<p align="center"> <img src="img/ipdex_search.svg" alt="ipdex running a search query" width="900" /> </p>
 
 #### Search IPs reported for a specific CVE
 

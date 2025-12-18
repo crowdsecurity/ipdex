@@ -1,0 +1,143 @@
+<svg height="740" width="659.2" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(32,16)">
+<filter filterUnits="userSpaceOnUse" height="748" id="shadow" width="667.2" x="-32" y="-24">
+<feGaussianBlur stdDeviation="12"/>
+</filter>
+<rect fill="#000000c0" filter="url(#shadow)" height="676" rx="10" ry="10" width="595.2" x="4" y="12"/>
+<rect fill="#282c34" height="676" rx="10" ry="10" width="595.2"/>
+<clipPath id="header">
+<rect height="28" width="595.2"/>
+</clipPath>
+<rect clip-path="url(#header)" fill="#383837" height="56" rx="10" ry="10" width="595.2"/>
+<line stroke="#000000c0" stroke-width="0.5" x1="0" x2="595.2" y1="28" y2="28"/><text dominant-baseline="central" fill="#b3b3b3" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" x="297.6" y="14">ipdex 137.184.231.98</text>
+<g>
+<circle cx="14" cy="14" fill="#ff5f56" r="6" stroke="#ff5f56" stroke-width="0.5"/>
+<circle cx="34" cy="14" fill="#ffbd2e" r="6" stroke="#ffbd2e" stroke-width="0.5"/>
+<circle cx="54" cy="14" fill="#28c941" r="6" stroke="#28c941" stroke-width="0.5"/>
+</g>
+<svg class="terminal" font-family="JetBrains Mono, Fira Code, Source Code Pro, Cascadia Code, Consolas, Menlo, Monaco, DejaVu Sans Mono, monospace, Symbols Nerd Font Mono" font-size="12" height="648" width="595.2" y="28">
+<svg fill="#dcdfe4" x="9.6" y="7.2">
+<g>
+<svg height="633.6" viewBox="0 0 48 52.8" width="576">
+<g stroke-width="0.025"/>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="14.4">
+<text xml:space="preserve" y="0.96em"><tspan fill="#dcdfe4" font-weight="bold" text-decoration="underline" text-decoration-style="solid">IP </tspan><tspan fill="#dcdfe4" font-weight="bold" text-decoration="underline" text-decoration-style="solid">Information</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="43.2">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">IP </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">137.184.231.98</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="57.6">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Reputation </tspan><tspan fill="#f55b60" font-weight="bold" x="19.2em">malicious</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="72">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Confidence </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">high</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="86.4">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Country </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">US </tspan><tspan fill="#dcdfe4" font-weight="bold">🇺🇸</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="100.8">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Autonomous </tspan><tspan fill="#f7f9fc" font-weight="bold">System </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">DIGITALOCEAN-ASN</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="115.2">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Reverse </tspan><tspan fill="#f7f9fc" font-weight="bold">DNS </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">zgxnutraceuticals.com</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="129.6">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Range </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">137.184.224.0/20</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="144">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">First </tspan><tspan fill="#f7f9fc" font-weight="bold">Seen </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">2022-04-22T18:00:00</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="158.4">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Last </tspan><tspan fill="#f7f9fc" font-weight="bold">Seen </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">2025-12-02T19:45:00</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="172.8">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Console </tspan><tspan fill="#f7f9fc" font-weight="bold">URL </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">https://app.crowdsec.net/cti/137.184.231.98</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="187.2">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Last </tspan><tspan fill="#f7f9fc" font-weight="bold">Local </tspan><tspan fill="#f7f9fc" font-weight="bold">Refresh </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">2025-12-18 </tspan><tspan fill="#dcdfe4" font-weight="bold">14:00:49</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="216">
+<text xml:space="preserve" y="0.96em"><tspan fill="#dcdfe4" font-weight="bold" text-decoration="underline" text-decoration-style="solid">Threat </tspan><tspan fill="#dcdfe4" font-weight="bold" text-decoration="underline" text-decoration-style="solid">Information</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="244.8">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Behaviors</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="259.2">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f55b60" font-weight="bold" x="19.2em">HTTP </tspan><tspan fill="#f55b60" font-weight="bold">Scan</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="273.6">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f55b60" font-weight="bold" x="19.2em">HTTP </tspan><tspan fill="#f55b60" font-weight="bold">Exploit</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="288">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f55b60" font-weight="bold" x="19.2em">HTTP </tspan><tspan fill="#f55b60" font-weight="bold">Bruteforce</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="302.4">
+<text xml:space="preserve" y="0.96em"><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">... </tspan><tspan fill="#dcdfe4" font-weight="bold">and </tspan><tspan fill="#dcdfe4" font-weight="bold">1 </tspan><tspan fill="#dcdfe4" font-weight="bold">more</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="345.6">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Classifications</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="360">
+<text xml:space="preserve" y="0.96em"><tspan fill="#60a5fa" font-weight="bold" x="19.2em">Data </tspan><tspan fill="#60a5fa" font-weight="bold">Center </tspan><tspan fill="#60a5fa" font-weight="bold">IP</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="374.4">
+<text xml:space="preserve" y="0.96em"><tspan fill="#60a5fa" font-weight="bold" x="19.2em">Attacker </tspan><tspan fill="#60a5fa" font-weight="bold">Group: </tspan><tspan fill="#60a5fa" font-weight="bold">Nervous </tspan><tspan fill="#60a5fa" font-weight="bold">Teal </tspan><tspan fill="#60a5fa" font-weight="bold">Creeper</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="388.8">
+<text xml:space="preserve" y="0.96em"><tspan fill="#60a5fa" font-weight="bold" x="19.2em">CrowdSec </tspan><tspan fill="#60a5fa" font-weight="bold">Community </tspan><tspan fill="#60a5fa" font-weight="bold">Blocklist</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="417.6">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Blocklists</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="432">
+<text xml:space="preserve" y="0.96em"><tspan fill="#60a5fa" font-weight="bold" x="19.2em">HTTP </tspan><tspan fill="#60a5fa" font-weight="bold">Exploit </tspan><tspan fill="#60a5fa" font-weight="bold">Attackers</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="446.4">
+<text xml:space="preserve" y="0.96em"><tspan fill="#60a5fa" font-weight="bold" x="19.2em">CrowdSec </tspan><tspan fill="#60a5fa" font-weight="bold">CVE-2024-4577</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="475.2">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Exploiting </tspan><tspan fill="#f7f9fc" font-weight="bold">CVEs</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="489.6">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f55b60" font-weight="bold" x="19.2em">CVE-2025-8943</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="504">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f55b60" font-weight="bold" x="19.2em">CVE-2025-8868</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="518.4">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f55b60" font-weight="bold" x="19.2em">CVE-2025-64446</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="532.8">
+<text xml:space="preserve" y="0.96em"><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">... </tspan><tspan fill="#dcdfe4" font-weight="bold">and </tspan><tspan fill="#dcdfe4" font-weight="bold">237 </tspan><tspan fill="#dcdfe4" font-weight="bold">more</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="561.6">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">Target </tspan><tspan fill="#f7f9fc" font-weight="bold">countries</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="576">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">🇺🇸</tspan><tspan fill="#f7f9fc" font-weight="bold" x="4.8em">US </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">28%</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="590.4">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">🇩🇪</tspan><tspan fill="#f7f9fc" font-weight="bold" x="4.8em">DE </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">17%</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="604.8">
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">🇫🇷</tspan><tspan fill="#f7f9fc" font-weight="bold" x="4.8em">FR </tspan><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">17%</tspan></text>
+</svg>
+<svg height="14.4" overflow="hidden" width="576" y="619.2">
+<text xml:space="preserve" y="0.96em"><tspan fill="#dcdfe4" font-weight="bold" x="19.2em">... </tspan><tspan fill="#dcdfe4" font-weight="bold">and </tspan><tspan fill="#dcdfe4" font-weight="bold">2 </tspan><tspan fill="#dcdfe4" font-weight="bold">more</tspan></text>
+</svg>
+</g>
+</svg>
+</svg>
+<rect fill="none" height="676" rx="10" ry="10" stroke="#000000" stroke-width="0.5" width="595.2"/>
+<rect fill="none" height="674" rx="9" ry="9" stroke="#f0f0f080" stroke-width="0.5" width="593.2" x="1" y="1"/>
+</g>
+<style>
+@font-face {
+	font-family: JetBrains Mono;
+	font-weight: 100 800;
+	font-style: normal;
+	src: url(https://raw.githubusercontent.com/pamburus/fonts/refs/heads/main/JetBrainsMono/fonts/variable/JetBrainsMono%5Bwght%5D.woff2) format('woff2');
+}
+</style>
+</svg>
