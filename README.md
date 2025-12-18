@@ -9,6 +9,8 @@ Your ultimate IP dex!
 
 **ipdex** is a simple CLI tool to gather insight about a list of IPs or an IP using the [CrowdSec CTI](https://www.crowdsec.net/cyber-threat-intelligence) (Cyber Threat Intelligence) API.
 
+<p align="center"> <img src="img/ipdex_single_ip.svg" alt="ipdex querying a single IP" width="900" /> </p>
+
 ---
 
 ## Table of Contents
@@ -154,8 +156,8 @@ ipdex 1.2.3.4
 ### 5. Scan a file
 
 ```bash
-ipdex file ips.txt
-ipdex file /var/log/nginx.log
+ipdex ips.txt
+ipdex /var/log/nginx.log
 ```
 
 <p align="center"> <img src="img/ipdex_file.svg" alt="ipdex scanning a file" width="900" /> </p>
