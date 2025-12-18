@@ -9,6 +9,8 @@ Your ultimate IP dex!
 
 **ipdex** is a simple CLI tool to gather insight about a list of IPs or an IP using the [CrowdSec CTI](https://www.crowdsec.net/cyber-threat-intelligence) (Cyber Threat Intelligence) API.
 
+<p align="center"> <img src="img/ipdex_single_ip.svg" alt="ipdex querying a single IP" width="600" /> </p>
+
 ---
 
 ## Table of Contents
@@ -149,12 +151,16 @@ Enter your API key and set your preferences.
 ipdex 1.2.3.4
 ```
 
+<p align="center"> <img src="img/ipdex_single_ip.svg" alt="ipdex querying a single IP" width="600" /> </p>
+
 ### 5. Scan a file
 
 ```bash
-ipdex file ips.txt
-ipdex file /var/log/nginx.log
+ipdex ips.txt
+ipdex /var/log/nginx.log
 ```
+
+<p align="center"> <img src="img/ipdex_file.svg" alt="ipdex scanning a file" width="900" /> </p>
 
 ---
 
@@ -258,6 +264,7 @@ By default, the `since` parameter is set to `30d`.
 
 ⚠️ Each queried page counts as 1 quota.
 
+<p align="center"> <img src="img/ipdex_search.svg" alt="ipdex running a search query" width="600" /> </p>
 
 #### Search IPs reported for a specific CVE
 
