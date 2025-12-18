@@ -9,7 +9,7 @@ Your ultimate IP dex!
 
 **ipdex** is a simple CLI tool to gather insight about a list of IPs or an IP using the [CrowdSec CTI](https://www.crowdsec.net/cyber-threat-intelligence) (Cyber Threat Intelligence) API.
 
-<p align="center"> <img src="img/ipdex_single_ip.svg" alt="ipdex querying a single IP" width="600" /> </p>
+<p align="center"> <img src="img/ipdex_file.svg" alt="ipdex scanning a file" width="1200" /> </p>
 
 ---
 
@@ -151,7 +151,7 @@ Enter your API key and set your preferences.
 ipdex 1.2.3.4
 ```
 
-<p align="center"> <img src="img/ipdex_single_ip.svg" alt="ipdex querying a single IP" width="900" /> </p>
+<p align="center"> <img src="img/ipdex_single_ip.svg" alt="ipdex querying a single IP" width="600" /> </p>
 
 ### 5. Scan a file
 
