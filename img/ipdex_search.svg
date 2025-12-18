@@ -1,26 +1,27 @@
-<svg height="1200.8" width="616" xmlns="http://www.w3.org/2000/svg">
-<g transform="translate(32,16)">
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" height="1200.8" width="616">
+<defs><filter id="blur-ip" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="3" /></filter></defs><g transform="translate(32,16)">
 <filter filterUnits="userSpaceOnUse" height="1208.8" id="shadow" width="624" x="-32" y="-24">
-<feGaussianBlur stdDeviation="12"/>
+<feGaussianBlur stdDeviation="12" />
 </filter>
-<rect fill="#000000c0" filter="url(#shadow)" height="1136.8" rx="10" ry="10" width="552" x="4" y="12"/>
-<rect fill="#282c34" height="1136.8" rx="10" ry="10" width="552"/>
+<rect fill="#000000c0" filter="url(#shadow)" height="1136.8" rx="10" ry="10" width="552" x="4" y="12" />
+<rect fill="#282c34" height="1136.8" rx="10" ry="10" width="552" />
 <clipPath id="header">
-<rect height="28" width="552"/>
+<rect height="28" width="552" />
 </clipPath>
-<rect clip-path="url(#header)" fill="#383837" height="56" rx="10" ry="10" width="552"/>
-<line stroke="#000000c0" stroke-width="0.5" x1="0" x2="552" y1="28" y2="28"/><text dominant-baseline="central" fill="#b3b3b3" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" x="276" y="14">ipdex search 'cves:CVE-2025-55182' --since 30m</text>
+<rect clip-path="url(#header)" fill="#383837" height="56" rx="10" ry="10" width="552" />
+<line stroke="#000000c0" stroke-width="0.5" x1="0" x2="552" y1="28" y2="28" /><text dominant-baseline="central" fill="#b3b3b3" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" x="276" y="14">ipdex search 'cves:CVE-2025-55182' --since 30m</text>
 <g>
-<circle cx="14" cy="14" fill="#ff5f56" r="6" stroke="#ff5f56" stroke-width="0.5"/>
-<circle cx="34" cy="14" fill="#ffbd2e" r="6" stroke="#ffbd2e" stroke-width="0.5"/>
-<circle cx="54" cy="14" fill="#28c941" r="6" stroke="#28c941" stroke-width="0.5"/>
+<circle cx="14" cy="14" fill="#ff5f56" r="6" stroke="#ff5f56" stroke-width="0.5" />
+<circle cx="34" cy="14" fill="#ffbd2e" r="6" stroke="#ffbd2e" stroke-width="0.5" />
+<circle cx="54" cy="14" fill="#28c941" r="6" stroke="#28c941" stroke-width="0.5" />
 </g>
 <svg class="terminal" font-family="JetBrains Mono, Fira Code, Source Code Pro, Cascadia Code, Consolas, Menlo, Monaco, DejaVu Sans Mono, monospace, Symbols Nerd Font Mono" font-size="12" height="1108.8" width="552" y="28">
 <svg fill="#dcdfe4" x="9.6" y="7.2">
 <g>
 <svg height="1094.4" viewBox="0 0 44.4 91.2" width="532.8">
 <g stroke-width="0.025">
-<path d="M0,0 H5.4 V1.2 H0 Z" fill="#98c379" stroke="#98c379"/>
+<path d="M0,0 H5.4 V1.2 H0 Z" fill="#98c379" stroke="#98c379" />
 </g>
 </svg>
 <svg height="14.4" overflow="hidden" width="532.8" y="0">
@@ -150,24 +151,24 @@
 <text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">CVE-2024-21887 </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">1 </tspan><tspan fill="#dcdfe4" font-weight="bold">(1%)</tspan></text>
 </svg>
 <svg height="14.4" overflow="hidden" width="532.8" y="734.4">
-<text xml:space="preserve" y="0.96em"></text>
+<text xml:space="preserve" y="0.96em" />
 <text textLength="0.6em" x="0em" xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">🌐</tspan></text>
 <text x="0.6em" xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="1.8em">Top </tspan><tspan fill="#f7f9fc" font-weight="bold">IP </tspan><tspan fill="#f7f9fc" font-weight="bold">Ranges</tspan></text>
 </svg>
 <svg height="14.4" overflow="hidden" width="532.8" y="748.8">
-<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">35.176.0.0/13 </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">7 </tspan><tspan fill="#dcdfe4" font-weight="bold">(6%)</tspan></text>
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em" filter="url(#blur-ip)">35.176.0.0/13</tspan><tspan fill="#f7f9fc" font-weight="bold"> </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">7 </tspan><tspan fill="#dcdfe4" font-weight="bold">(6%)</tspan></text>
 </svg>
 <svg height="14.4" overflow="hidden" width="532.8" y="763.2">
-<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">3.96.0.0/11 </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">7 </tspan><tspan fill="#dcdfe4" font-weight="bold">(6%)</tspan></text>
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em" filter="url(#blur-ip)">3.96.0.0/11</tspan><tspan fill="#f7f9fc" font-weight="bold"> </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">7 </tspan><tspan fill="#dcdfe4" font-weight="bold">(6%)</tspan></text>
 </svg>
 <svg height="14.4" overflow="hidden" width="532.8" y="777.6">
-<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">44.224.0.0/11 </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">6 </tspan><tspan fill="#dcdfe4" font-weight="bold">(5%)</tspan></text>
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em" filter="url(#blur-ip)">44.224.0.0/11</tspan><tspan fill="#f7f9fc" font-weight="bold"> </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">6 </tspan><tspan fill="#dcdfe4" font-weight="bold">(5%)</tspan></text>
 </svg>
 <svg height="14.4" overflow="hidden" width="532.8" y="792">
-<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">108.128.0.0/13 </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">5 </tspan><tspan fill="#dcdfe4" font-weight="bold">(5%)</tspan></text>
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em" filter="url(#blur-ip)">108.128.0.0/13</tspan><tspan fill="#f7f9fc" font-weight="bold"> </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">5 </tspan><tspan fill="#dcdfe4" font-weight="bold">(5%)</tspan></text>
 </svg>
 <svg height="14.4" overflow="hidden" width="532.8" y="806.4">
-<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em">3.128.0.0/10 </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">4 </tspan><tspan fill="#dcdfe4" font-weight="bold">(4%)</tspan></text>
+<text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold" x="3em" filter="url(#blur-ip)">3.128.0.0/10</tspan><tspan fill="#f7f9fc" font-weight="bold"> </tspan><tspan fill="#dcdfe4" font-weight="bold" x="38.4em">4 </tspan><tspan fill="#dcdfe4" font-weight="bold">(4%)</tspan></text>
 </svg>
 <svg height="14.4" overflow="hidden" width="532.8" y="835.2">
 <text xml:space="preserve" y="0.96em"><tspan fill="#f7f9fc" font-weight="bold">🛰️</tspan><tspan fill="#f7f9fc" font-weight="bold" x="1.8em">Top </tspan><tspan fill="#f7f9fc" font-weight="bold">Autonomous </tspan><tspan fill="#f7f9fc" font-weight="bold">Systems</tspan></text>
@@ -217,8 +218,8 @@
 </g>
 </svg>
 </svg>
-<rect fill="none" height="1136.8" rx="10" ry="10" stroke="#000000" stroke-width="0.5" width="552"/>
-<rect fill="none" height="1134.8" rx="9" ry="9" stroke="#f0f0f080" stroke-width="0.5" width="550" x="1" y="1"/>
+<rect fill="none" height="1136.8" rx="10" ry="10" stroke="#000000" stroke-width="0.5" width="552" />
+<rect fill="none" height="1134.8" rx="9" ry="9" stroke="#f0f0f080" stroke-width="0.5" width="550" x="1" y="1" />
 </g>
 <style>
 @font-face {
