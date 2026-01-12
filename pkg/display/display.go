@@ -98,18 +98,20 @@ func displayIPCSV(item *cticlient.SmokeItem, ipLastRefresh time.Time) error {
 	timestamps := strings.Split(history, ",")
 	firstSeen, lastSeen := timestamps[0], timestamps[1]
 
-	w.Write([]string{"IP", "Reputation", "Confidence", "Country", "Autonomous System",
+	err := w.Write([]string{"IP", "Reputation", "Confidence", "Country", "Autonomous System",
 		"Reverse DNS", "Range", "First Seen", "Last Seen", "Console URL",
 		"Last Local Refresh", "Behaviors", "False Positives", "Classifications", "Blocklists", "CVEs"})
 
-	w.Write([]string{item.Ip, reputation, item.Confidence, Format(item.Location, FormatCSV),
-		Format(item.AsName, FormatCSV), Format(item.ReverseDNS, FormatCSV), Format(item.IpRange, FormatCSV),
-		firstSeen, lastSeen, fmt.Sprintf("https://app.crowdsec.net/cti/%s", item.Ip),
-		ipLastRefresh.Format("2006-01-02 15:04:05"), Format(item.Behaviors, FormatCSV),
-		Format(item.Classifications.FalsePositives, FormatCSV), Format(item.Classifications.Classifications, FormatCSV),
-		Format(item.References, FormatCSV), Format(item.CVEs, FormatCSV)})
+	if err == nil {
+		err = w.Write([]string{item.Ip, reputation, item.Confidence, Format(item.Location, FormatCSV),
+			Format(item.AsName, FormatCSV), Format(item.ReverseDNS, FormatCSV), Format(item.IpRange, FormatCSV),
+			firstSeen, lastSeen, fmt.Sprintf("https://app.crowdsec.net/cti/%s", item.Ip),
+			ipLastRefresh.Format("2006-01-02 15:04:05"), Format(item.Behaviors, FormatCSV),
+			Format(item.Classifications.FalsePositives, FormatCSV), Format(item.Classifications.Classifications, FormatCSV),
+			Format(item.References, FormatCSV), Format(item.CVEs, FormatCSV)})
+	}
 
-	return nil
+	return err
 }
 
 func displayIPHuman(item *cticlient.SmokeItem, ipLastRefresh time.Time, detailed bool) error {
@@ -607,132 +609,151 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	writer := csv.NewWriter(os.Stdout)
 	defer writer.Flush()
 
-	// Write general section
-	writer.Write([]string{"General", "", ""})
-	writer.Write([]string{"", "", ""})
-	writer.Write([]string{"Report ID", strconv.Itoa(int(item.ID)), ""})
-	writer.Write([]string{"Report Name", item.Name, ""})
-	writer.Write([]string{"Creation Date", item.CreatedAt.Format("2006-01-02 15:04:05"), ""})
+	// Helper function to write multiple rows
+	writeRows := func(rows [][]string) error {
+		for _, row := range rows {
+			if err := writer.Write(row); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// Collect all rows to write
+	var rows [][]string
+
+	// General section
+	rows = append(rows, []string{"General", "", ""})
+	rows = append(rows, []string{"", "", ""})
+	rows = append(rows, []string{"Report ID", strconv.Itoa(int(item.ID)), ""})
+	rows = append(rows, []string{"Report Name", item.Name, ""})
+	rows = append(rows, []string{"Creation Date", item.CreatedAt.Format("2006-01-02 15:04:05"), ""})
 
 	if item.IsFile {
-		writer.Write([]string{"File path", item.FilePath, ""})
-		writer.Write([]string{"SHA256", item.FileHash, ""})
+		rows = append(rows, []string{"File path", item.FilePath, ""})
+		rows = append(rows, []string{"SHA256", item.FileHash, ""})
 	}
 
 	if item.IsQuery {
-		writer.Write([]string{"Query", item.Query, ""})
-		writer.Write([]string{"Since Duration", item.Since, ""})
-		writer.Write([]string{"Since Time", item.SinceTime.Format("2006-01-02 15:04:05"), ""})
+		rows = append(rows, []string{"Query", item.Query, ""})
+		rows = append(rows, []string{"Since Duration", item.Since, ""})
+		rows = append(rows, []string{"Since Time", item.SinceTime.Format("2006-01-02 15:04:05"), ""})
 	}
 
-	writer.Write([]string{"Number of IPs", strconv.Itoa(len(item.IPs)), ""})
+	rows = append(rows, []string{"Number of IPs", strconv.Itoa(len(item.IPs)), ""})
 
 	knownIPPercent := float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
 	ipsInBlocklistPercent := float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
 
-	writer.Write([]string{"Number of known IPs", fmt.Sprintf("%d", stats.NbIPs-stats.NbUnknownIPs), fmt.Sprintf("%.0f%%", knownIPPercent)})
-	writer.Write([]string{"Number of IPs in Blocklist", fmt.Sprintf("%d", stats.IPsBlockedByBlocklist), fmt.Sprintf("%.0f%%", ipsInBlocklistPercent)})
+	rows = append(rows, []string{"Number of known IPs", fmt.Sprintf("%d", stats.NbIPs-stats.NbUnknownIPs), fmt.Sprintf("%.0f%%", knownIPPercent)})
+	rows = append(rows, []string{"Number of IPs in Blocklist", fmt.Sprintf("%d", stats.IPsBlockedByBlocklist), fmt.Sprintf("%.0f%%", ipsInBlocklistPercent)})
 
 	// Empty line before Stats section
-	writer.Write([]string{"", "", ""})
+	rows = append(rows, []string{"", "", ""})
 
 	// Stats section
-	writer.Write([]string{"Stats", "", ""})
-	writer.Write([]string{"", "", ""})
+	rows = append(rows, []string{"Stats", "", ""})
+	rows = append(rows, []string{"", "", ""})
 
 	// Top Reputation
 	TopReputation := getTopN(stats.TopReputation, maxTopDisplayReport)
 	if len(TopReputation) > 0 {
-		writer.Write([]string{"Top Reputation", "", ""})
+		rows = append(rows, []string{"Top Reputation", "", ""})
 		for _, stat := range TopReputation {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			writer.Write([]string{cases.Title(language.Und).String(stat.Key), fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+			rows = append(rows, []string{cases.Title(language.Und).String(stat.Key), fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		writer.Write([]string{"", "", ""})
+		rows = append(rows, []string{"", "", ""})
 	}
 
 	// Top Classifications
 	topClassification := getTopN(stats.TopClassifications, maxTopDisplayReport)
 	if len(topClassification) > 0 {
-		writer.Write([]string{"Top Classifications", "", ""})
+		rows = append(rows, []string{"Top Classifications", "", ""})
 		for _, stat := range topClassification {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			writer.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		writer.Write([]string{"", "", ""})
+		rows = append(rows, []string{"", "", ""})
 	}
 
 	// Top Behaviors
 	topBehaviors := getTopN(stats.TopBehaviors, maxTopDisplayReport)
 	if len(topBehaviors) > 0 {
-		writer.Write([]string{"Top Behaviors", "", ""})
+		rows = append(rows, []string{"Top Behaviors", "", ""})
 		for _, stat := range topBehaviors {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			writer.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		writer.Write([]string{"", "", ""})
+		rows = append(rows, []string{"", "", ""})
 	}
 
 	// Top Blocklists
 	topBlocklists := getTopN(stats.TopBlocklists, maxTopDisplayReport)
 	if len(topBlocklists) > 0 {
-		writer.Write([]string{"Top Blocklists", "", ""})
+		rows = append(rows, []string{"Top Blocklists", "", ""})
 		for _, stat := range topBlocklists {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			writer.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		writer.Write([]string{"", "", ""})
+		rows = append(rows, []string{"", "", ""})
 	}
 
 	// Top CVEs
 	topCVEs := getTopN(stats.TopCVEs, maxTopDisplayReport)
 	if len(topCVEs) > 0 {
-		writer.Write([]string{"Top CVEs", "", ""})
+		rows = append(rows, []string{"Top CVEs", "", ""})
 		for _, stat := range topCVEs {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			writer.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		writer.Write([]string{"", "", ""})
+		rows = append(rows, []string{"", "", ""})
 	}
 
 	// Top IP Ranges
 	TopIPRange := getTopN(stats.TopIPRange, maxTopDisplayReport)
 	if len(TopIPRange) > 0 {
-		writer.Write([]string{"Top IP Ranges", "", ""})
+		rows = append(rows, []string{"Top IP Ranges", "", ""})
 		for _, stat := range TopIPRange {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			writer.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		writer.Write([]string{"", "", ""})
+		rows = append(rows, []string{"", "", ""})
 	}
 
 	// Top Autonomous Systems
 	topAS := getTopN(stats.TopAS, maxTopDisplayReport)
 	if len(topAS) > 0 {
-		writer.Write([]string{"Top Autonomous Systems", "", ""})
+		rows = append(rows, []string{"Top Autonomous Systems", "", ""})
 		for _, stat := range topAS {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			writer.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		writer.Write([]string{"", "", ""})
+		rows = append(rows, []string{"", "", ""})
 	}
 
 	// Top Countries
 	topCountry := getTopN(stats.TopCountries, maxTopDisplayReport)
 	if len(topCountry) > 0 {
-		writer.Write([]string{"Top Countries", "", ""})
+		rows = append(rows, []string{"Top Countries", "", ""})
 		for _, stat := range topCountry {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			writer.Write([]string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
 		}
-		writer.Write([]string{"", "", ""})
+		rows = append(rows, []string{"", "", ""})
+	}
+
+	//write report IPs details
+	err := writeRows(rows)
+	if err != nil {
+		return err
 	}
 
 	// If detailed IP information is requested, show it
 	if withIPs {
-		writer.Write([]string{"", "", ""})
-		writer.Write([]string{"IP Details", "", ""})
-		writer.Write([]string{
+		rows = append(rows, []string{"", "", ""})
+		rows = append(rows, []string{"IP Details", "", ""})
+		rows = append(rows, []string{
 			"IP", "Country", "AS Name", "Reputation", "Confidence",
 			"Reverse DNS", "Profile", "Behaviors", "Range", "First Seen", "Last Seen",
 		})
@@ -798,13 +819,19 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 				confidence = "N/A"
 			}
 
-			writer.Write([]string{
+			rows = append(rows, []string{
 				ipItem.Ip, country, asName, reputation, confidence,
 				reverseDNS, classif, behaviors, ipRange, firstSeen, lastSeen,
 			})
 		}
 	}
 
+	// Write IP details rows
+	err = writeRows(rows)
+	if err != nil {
+		return err
+	}
+	// Write all rows at once
 	return nil
 }
 
