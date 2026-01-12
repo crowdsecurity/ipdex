@@ -75,7 +75,8 @@ func init() {
 	rootCmd.Flags().BoolVarP(&config.ForceRefresh, "refresh", "r", false, "Force refresh an IP or all the IPs of a report")
 	rootCmd.Flags().BoolVarP(&config.Yes, "yes", "y", false, "Say automatically yes to the warning about the number of IPs to scan")
 	rootCmd.PersistentFlags().BoolVarP(&config.Detailed, "detailed", "d", false, "Show all informations about an IP or a report")
-	rootCmd.PersistentFlags().StringVarP(&config.OutputFormat, "output", "o", "", "Output format: human or json")
+	rootCmd.PersistentFlags().StringVarP(&config.OutputFormat, "output", "o", "", "Output format: human, json, or csv")
+	rootCmd.PersistentFlags().StringVar(&config.OutputFilePath, "output-path", "", "Output file path for saving reports in the format specified by -o (saves report and details files separately)")
 	rootCmd.Flags().StringVarP(&config.ReportName, "name", "n", "", "Report name when scanning a file or making a search query")
 	rootCmd.Flags().BoolVarP(&config.Batching, "batch", "b", false, "Use batching to request the CrowdSec API. Make sure you have a premium API key to use this feature.")
 }
