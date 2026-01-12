@@ -54,6 +54,8 @@ func NewRowDisplay(writer *tabwriter.Writer, maxSpace int) *RowDisplay {
 	}
 }
 
+/// Top level display strategy functions
+
 func (d *Display) DisplayIP(item *cticlient.SmokeItem, ipLastRefresh time.Time, format string, detailed bool) error {
 	switch format {
 	case HumanFormat:
@@ -74,45 +76,54 @@ func (d *Display) DisplayIP(item *cticlient.SmokeItem, ipLastRefresh time.Time, 
 	return nil
 }
 
-func displayIPJSON(item *cticlient.SmokeItem) error {
-	jsonData, err := json.MarshalIndent(item, "", "  ")
-	if err != nil {
-		return err
+func (d *Display) DisplayReport(report *models.Report, stats *models.ReportStats, format string, withIPs bool, outputFilePath string) error {
+	switch format {
+	case HumanFormat:
+		humanFormattedData := buildHumanReportData(report, stats, withIPs)
+		if err := displayReportHuman(humanFormattedData); err != nil {
+			return err
+		}
+		if outputFilePath != "" {
+			if err := saveReportHuman(humanFormattedData, int(report.ID), outputFilePath); err != nil {
+				return err
+			}
+		}
+	case JSONFormat:
+		if err := displayReportJSON(report, stats); err != nil {
+			return err
+		}
+		if outputFilePath != "" {
+			if err := saveReportJSON(report, stats, withIPs, outputFilePath); err != nil {
+				return err
+			}
+		}
+	case CSVFormat:
+		csvReportRows := buildCSVReportRows(report, stats, withIPs, false)
+		csvDetailRows := [][]string{}
+		if err := displayCSVRows(csvReportRows); err != nil {
+			return err
+		}
+
+		if withIPs {
+			csvDetailRows = buildCSVDetailsRows(report)
+			if err := displayCSVRows(csvDetailRows); err != nil {
+				return err
+			}
+		}
+
+		if outputFilePath != "" {
+			if err := saveReportCSV(csvReportRows, csvDetailRows, int(report.ID), outputFilePath); err != nil {
+				return err
+			}
+		}
+	default:
+		return fmt.Errorf("format '%s' not supported", format)
 	}
-	fmt.Printf("%s\n", jsonData)
+
 	return nil
 }
 
-func displayIPCSV(item *cticlient.SmokeItem, ipLastRefresh time.Time) error {
-	w := csv.NewWriter(os.Stdout)
-	defer w.Flush()
-
-	// Build reputation with false positives if applicable
-	reputation := item.Reputation
-	if reputation == "safe" && len(item.Classifications.FalsePositives) > 0 {
-		reputation = fmt.Sprintf("%s (%s)", reputation, Format(item.Classifications.FalsePositives, FormatCSV))
-	}
-
-	// Extract timestamps
-	history := Format(item.History, FormatCSV)
-	timestamps := strings.Split(history, ",")
-	firstSeen, lastSeen := timestamps[0], timestamps[1]
-
-	err := w.Write([]string{"IP", "Reputation", "Confidence", "Country", "Autonomous System",
-		"Reverse DNS", "Range", "First Seen", "Last Seen", "Console URL",
-		"Last Local Refresh", "Behaviors", "False Positives", "Classifications", "Blocklists", "CVEs"})
-
-	if err == nil {
-		err = w.Write([]string{item.Ip, reputation, item.Confidence, Format(item.Location, FormatCSV),
-			Format(item.AsName, FormatCSV), Format(item.ReverseDNS, FormatCSV), Format(item.IpRange, FormatCSV),
-			firstSeen, lastSeen, fmt.Sprintf("https://app.crowdsec.net/cti/%s", item.Ip),
-			ipLastRefresh.Format("2006-01-02 15:04:05"), Format(item.Behaviors, FormatCSV),
-			Format(item.Classifications.FalsePositives, FormatCSV), Format(item.Classifications.Classifications, FormatCSV),
-			Format(item.References, FormatCSV), Format(item.CVEs, FormatCSV)})
-	}
-
-	return err
-}
+/// IP display functions
 
 func displayIPHuman(item *cticlient.SmokeItem, ipLastRefresh time.Time, detailed bool) error {
 	keyStyle := lipgloss.NewStyle().
@@ -322,182 +333,183 @@ func displayIPHuman(item *cticlient.SmokeItem, ipLastRefresh time.Time, detailed
 	return nil
 }
 
-func (d *Display) DisplayReport(item *models.Report, stats *models.ReportStats, format string, withIPs bool, outputFilePath string) error {
-	switch format {
-	case HumanFormat:
-		if err := displayReportHuman(item, stats, withIPs); err != nil {
-			return err
-		}
-	case JSONFormat:
-		if err := displayReportJSON(item, stats); err != nil {
-			return err
-		}
-	case CSVFormat:
-		// For CSV format, display in CSV format on screen
-		if err := displayReportCSV(item, stats, withIPs); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("format '%s' not supported", format)
+func displayIPJSON(item *cticlient.SmokeItem) error {
+	jsonData, err := json.MarshalIndent(item, "", "  ")
+	if err != nil {
+		return err
 	}
-
-	// If output file path is provided, save files in the specified format
-	if outputFilePath != "" {
-		switch format {
-		case HumanFormat:
-			if err := saveReportHuman(item, stats, withIPs, outputFilePath); err != nil {
-				return err
-			}
-		case JSONFormat:
-			if err := saveReportJSON(item, stats, withIPs, outputFilePath); err != nil {
-				return err
-			}
-		case CSVFormat:
-			if err := saveReportCSV(item, stats, withIPs, outputFilePath); err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("format '%s' not supported for file output", format)
-		}
-	}
-
+	fmt.Printf("%s\n", jsonData)
 	return nil
 }
 
-func displayReportHuman(report *models.Report, stats *models.ReportStats, withIPs bool) error {
-	keyStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("15"))
+func displayIPCSV(item *cticlient.SmokeItem, ipLastRefresh time.Time) error {
+	w := csv.NewWriter(os.Stdout)
+	defer w.Flush()
 
-	valueStyle := lipgloss.NewStyle().Bold(true)
-	writer := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
-	sectionStyle := pterm.NewStyle(pterm.FgWhite, pterm.Bold)
-	rd := NewRowDisplay(writer, maxKeyLength)
+	// Build reputation with false positives if applicable
+	reputation := item.Reputation
+	if reputation == "safe" && len(item.Classifications.FalsePositives) > 0 {
+		reputation = fmt.Sprintf("%s (%s)", reputation, Format(item.Classifications.FalsePositives, FormatCSV))
+	}
 
-	PrintSection(sectionStyle, "General")
-	rd.PrintRow("Report ID", strconv.Itoa(int(report.ID)), keyStyle, valueStyle)
-	rd.PrintRow("Report Name", report.Name, keyStyle, valueStyle)
-	rd.PrintRow("Creation Date", report.CreatedAt.Format("2006-01-02 15:04:05"), keyStyle, valueStyle)
+	// Extract timestamps
+	history := Format(item.History, FormatCSV)
+	timestamps := strings.Split(history, ",")
+	firstSeen, lastSeen := timestamps[0], timestamps[1]
+
+	// Define fields in order with header and data
+	type field struct {
+		header string
+		value  string
+	}
+
+	fieldsToDisplay := []field{
+		{"IP", item.Ip},
+		{"Reputation", reputation},
+		{"Confidence", item.Confidence},
+		{"Country", Format(item.Location, FormatCSV)},
+		{"Autonomous System", Format(item.AsName, FormatCSV)},
+		{"Reverse DNS", Format(item.ReverseDNS, FormatCSV)},
+		{"Range", Format(item.IpRange, FormatCSV)},
+		{"First Seen", firstSeen},
+		{"Last Seen", lastSeen},
+		{"Console URL", fmt.Sprintf("https://app.crowdsec.net/cti/%s", item.Ip)},
+		{"Last Local Refresh", ipLastRefresh.Format("2006-01-02 15:04:05")},
+		{"Behaviors", Format(item.Behaviors, FormatCSV)},
+		{"False Positives", Format(item.Classifications.FalsePositives, FormatCSV)},
+		{"Classifications", Format(item.Classifications.Classifications, FormatCSV)},
+		{"Blocklists", Format(item.References, FormatCSV)},
+		{"CVEs", Format(item.CVEs, FormatCSV)},
+	}
+
+	// Extract headers and values from fieldsToDisplay
+	var headers, values []string
+	for _, f := range fieldsToDisplay {
+		headers = append(headers, f.header)
+		values = append(values, f.value)
+	}
+
+	// Write headers
+	if err := w.Write(headers); err != nil {
+		return err
+	}
+
+	// Write data row
+	return w.Write(values)
+}
+
+/// Report display functions
+
+// // HumanReportData holds structured report data for formatting
+type HumanReportData struct {
+	General               []KeyValue
+	TopSections           []TopSection
+	IPTableData           [][]string
+	Stats                 *models.ReportStats
+	KnownIPPercent        float64
+	IPsInBlocklistPercent float64
+}
+
+type KeyValue struct {
+	Key   string
+	Value string
+}
+
+type TopSection struct {
+	Title string
+	Emoji string
+	Items []TopItem
+}
+
+type TopItem struct {
+	Key     string
+	Value   int
+	Percent float64
+}
+
+// buildHumanReportData extracts report data into a structured format (used by both display and save)
+func buildHumanReportData(report *models.Report, stats *models.ReportStats, withIPs bool) *HumanReportData {
+	data := &HumanReportData{
+		Stats: stats,
+	}
+
+	// General section
+	data.General = []KeyValue{
+		{"Report ID", strconv.Itoa(int(report.ID))},
+		{"Report Name", report.Name},
+		{"Creation Date", report.CreatedAt.Format("2006-01-02 15:04:05")},
+	}
+
 	if report.IsFile {
-		rd.PrintRow("File path", report.FilePath, keyStyle, valueStyle)
-		rd.PrintRow("SHA256", report.FileHash, keyStyle, valueStyle)
+		data.General = append(data.General,
+			KeyValue{"File path", report.FilePath},
+			KeyValue{"SHA256", report.FileHash},
+		)
 	}
+
 	if report.IsQuery {
-		rd.PrintRow("Query", report.Query, keyStyle, valueStyle)
-		rd.PrintRow("Since Duration", report.Since, keyStyle, valueStyle)
-		rd.PrintRow("Since Time", report.SinceTime.Format("2006-01-02 15:04:05"), keyStyle, valueStyle)
+		data.General = append(data.General,
+			KeyValue{"Query", report.Query},
+			KeyValue{"Since Duration", report.Since},
+			KeyValue{"Since Time", report.SinceTime.Format("2006-01-02 15:04:05")},
+		)
 	}
-	rd.PrintRow("Number of IPs", strconv.Itoa(len(report.IPs)), keyStyle, valueStyle)
 
-	knownIPPercent := float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
-	ipsInBlocklistPercent := float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
-	rd.PrintRow("Number of known IPs", fmt.Sprintf("%d (%.0f%%)", stats.NbIPs-stats.NbUnknownIPs, knownIPPercent), keyStyle, GetPercentKnownColor(valueStyle, knownIPPercent))
-	rd.PrintRow("Number of IPs in Blocklist", fmt.Sprintf("%d (%.0f%%)", stats.IPsBlockedByBlocklist, ipsInBlocklistPercent), keyStyle, GetPercentKnownColor(valueStyle, knownIPPercent))
-	PrintSection(sectionStyle, "Stats")
+	data.General = append(data.General, KeyValue{"Number of IPs", strconv.Itoa(len(report.IPs))})
 
-	topWriter := tabwriter.NewWriter(os.Stdout, 0, 8, 10, '\t', tabwriter.AlignRight)
-	topRD := NewRowDisplay(topWriter, 50)
+	data.KnownIPPercent = float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
+	data.IPsInBlocklistPercent = float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
 
-	TopReputation := getTopN(stats.TopReputation, maxTopDisplayReport)
-	if len(TopReputation) > 0 {
-		rd.PrintRow("🌟 Top Reputation", "", keyStyle, valueStyle)
-		for _, stat := range TopReputation {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			topRD.PrintRow(fmt.Sprintf("\t %s", cases.Title(language.Und).String((TruncateWithEllipsis(stat.Key, maxKeyLen)))), fmt.Sprintf("%d (%.0f%%)", stat.Value, percent), keyStyle, GetReputationStyle(valueStyle, stat.Key))
+	data.General = append(data.General,
+		KeyValue{"Number of known IPs", fmt.Sprintf("%d (%.0f%%)", stats.NbIPs-stats.NbUnknownIPs, data.KnownIPPercent)},
+		KeyValue{"Number of IPs in Blocklist", fmt.Sprintf("%d (%.0f%%)", stats.IPsBlockedByBlocklist, data.IPsInBlocklistPercent)},
+	)
+
+	// Build top sections
+	buildSection := func(title, emoji string, topStats []KV) *TopSection {
+		if len(topStats) == 0 {
+			return nil
 		}
-		topWriter.Flush()
-	}
-	fmt.Println()
-	// Top Classifications
-	topClassification := getTopN(stats.TopClassifications, maxTopDisplayReport)
-	if len(topClassification) > 0 {
-		rd.PrintRow("🗂️ Top Classifications", "", keyStyle, valueStyle)
-		for _, stat := range topClassification {
+		section := &TopSection{Title: title, Emoji: emoji}
+		for _, stat := range topStats {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			topRD.PrintRow(fmt.Sprintf("\t %s", TruncateWithEllipsis(stat.Key, maxKeyLen)), fmt.Sprintf("%d (%.0f%%)", stat.Value, percent), keyStyle, valueStyle)
+			section.Items = append(section.Items, TopItem{
+				Key:     stat.Key,
+				Value:   stat.Value,
+				Percent: percent,
+			})
 		}
-		topWriter.Flush()
+		return section
 	}
-	fmt.Println()
 
-	// Top Behaviors
-	topBehaviors := getTopN(stats.TopBehaviors, maxTopDisplayReport)
-	if len(topBehaviors) > 0 {
-		rd.PrintRow("🤖 Top Behaviors", "", keyStyle, valueStyle)
-		for _, stat := range topBehaviors {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			topRD.PrintRow(fmt.Sprintf("\t %s", TruncateWithEllipsis(stat.Key, maxKeyLen)), fmt.Sprintf("%d (%.0f%%)", stat.Value, percent), keyStyle, valueStyle)
-		}
-		topWriter.Flush()
+	sections := []*TopSection{
+		buildSection("Top Reputation", "🌟", getTopN(stats.TopReputation, maxTopDisplayReport)),
+		buildSection("Top Classifications", "🗂️", getTopN(stats.TopClassifications, maxTopDisplayReport)),
+		buildSection("Top Behaviors", "🤖", getTopN(stats.TopBehaviors, maxTopDisplayReport)),
+		buildSection("Top Blocklists", "⛔", getTopN(stats.TopBlocklists, maxTopDisplayReport)),
+		buildSection("Top CVEs", "💥", getTopN(stats.TopCVEs, maxTopDisplayReport)),
+		buildSection("Top IP Ranges", "🌐", getTopN(stats.TopIPRange, maxTopDisplayReport)),
+		buildSection("Top Autonomous Systems", "🛰️", getTopN(stats.TopAS, maxTopDisplayReport)),
+		buildSection("Top Countries", "🌎", getTopN(stats.TopCountries, maxTopDisplayReport)),
 	}
-	fmt.Println()
 
-	topBlocklists := getTopN(stats.TopBlocklists, maxTopDisplayReport)
-	if len(topBlocklists) > 0 {
-		rd.PrintRow("⛔ Top Blocklists", "", keyStyle, valueStyle)
-		for _, stat := range topBlocklists {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			topRD.PrintRow(fmt.Sprintf("\t %s", TruncateWithEllipsis(stat.Key, maxKeyLen)), fmt.Sprintf("%d (%.0f%%)", stat.Value, percent), keyStyle, valueStyle)
+	for _, section := range sections {
+		if section != nil {
+			data.TopSections = append(data.TopSections, *section)
 		}
-		topWriter.Flush()
 	}
-	fmt.Println()
 
-	topCVEs := getTopN(stats.TopCVEs, maxTopDisplayReport)
-	if len(topCVEs) > 0 {
-		rd.PrintRow("💥 Top CVEs", "", keyStyle, valueStyle)
-		for _, stat := range topCVEs {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			topRD.PrintRow(fmt.Sprintf("\t %s", TruncateWithEllipsis(stat.Key, maxKeyLen)), fmt.Sprintf("%d (%.0f%%)", stat.Value, percent), keyStyle, valueStyle)
-		}
-		topWriter.Flush()
-	}
-	fmt.Println()
-
-	// Top IP Ranges
-	TopIPRange := getTopN(stats.TopIPRange, maxTopDisplayReport)
-	if len(TopIPRange) > 0 {
-		rd.PrintRow("🌐 Top IP Ranges", "", keyStyle, valueStyle)
-		for _, stat := range TopIPRange {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			topRD.PrintRow(fmt.Sprintf("\t %s", TruncateWithEllipsis(stat.Key, maxKeyLen)), fmt.Sprintf("%d (%.0f%%)", stat.Value, percent), keyStyle, valueStyle)
-		}
-		topWriter.Flush()
-	}
-	fmt.Println()
-
-	// Top Autonomous Systems
-	topAS := getTopN(stats.TopAS, maxTopDisplayReport)
-	if len(topAS) > 0 {
-		rd.PrintRow("🛰️ Top Autonomous Systems", "", keyStyle, valueStyle)
-		for _, stat := range topAS {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			topRD.PrintRow(fmt.Sprintf("\t %s", TruncateWithEllipsis(stat.Key, maxKeyLen)), fmt.Sprintf("%d (%.0f%%)", stat.Value, percent), keyStyle, valueStyle)
-		}
-		topWriter.Flush()
-	}
-	fmt.Println()
-
-	// Top Countries
-	topCountry := getTopN(stats.TopCountries, maxTopDisplayReport)
-	if len(topCountry) > 0 {
-		rd.PrintRow("🌎 Top Countries", "", keyStyle, valueStyle)
-		for _, stat := range topCountry {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			topRD.PrintRow(fmt.Sprintf("\t %s %s", TruncateWithEllipsis(stat.Key, maxKeyLen), getFlag(stat.Key)), fmt.Sprintf("%d (%.0f%%)", stat.Value, percent), keyStyle, valueStyle)
-		}
-		topWriter.Flush()
-	}
-	fmt.Println()
-	maxLineLength := 25
+	// Build IP table data if requested
 	if withIPs {
-		var tableData [][]string
-		tableData = append(tableData, []string{"IP", "Country", "AS Name", "Reputation", "Confidence", "Reverse DNS", "Profile", "Behaviors", "Range"})
+		maxLineLength := 25
+		data.IPTableData = [][]string{{"IP", "Country", "AS Name", "Reputation", "Confidence", "Reverse DNS", "Profile", "Behaviors", "Range"}}
+
 		for _, item := range report.IPs {
 			country := "N/A"
 			ipRange := "N/A"
 			asName := "N/A"
 			reverseDNS := "N/A"
+
 			if item.ReverseDNS != nil && *item.ReverseDNS != "" {
 				reverseDNS = *item.ReverseDNS
 				if len(reverseDNS) > maxLineLength {
@@ -510,37 +522,33 @@ func displayReportHuman(report *models.Report, stats *models.ReportStats, withIP
 			if item.IpRange != nil && *item.IpRange != "" {
 				ipRange = *item.IpRange
 			}
-			if item.IpRange != nil && *item.IpRange != "" {
-				ipRange = *item.IpRange
-			}
 			if item.AsName != nil && *item.AsName != "" {
 				asName = *item.AsName
 				if len(asName) > maxLineLength {
 					asName = asName[:maxLineLength] + "..."
 				}
 			}
+
 			behaviors := ""
 			for i, behavior := range item.Behaviors {
 				if len(behaviors)+len(behavior.Label) > maxLineLength {
 					behaviors += "..."
 					break
 				}
-
-				// Append the label
 				if behaviors != "" {
 					behaviors += ", "
 				}
 				behaviors += behavior.Label
-
 				if i+1 < len(item.Behaviors) && len(behaviors)+len(item.Behaviors[i+1].Label)+2 > maxLineLength {
 					behaviors += "..."
 					break
 				}
 			}
+
 			classif := "N/A"
 			if len(item.Classifications.Classifications) > 0 {
 				for _, classification := range item.Classifications.Classifications {
-					if len(item.Classifications.Classifications) > 1 && strings.ToLower(classification.Label) == "crowdSec community blocklist" {
+					if len(item.Classifications.Classifications) > 1 && strings.ToLower(classification.Label) == "crowdsec community blocklist" {
 						continue
 					}
 					classif = classification.Label
@@ -553,35 +561,108 @@ func displayReportHuman(report *models.Report, stats *models.ReportStats, withIP
 			}
 
 			if item.Reputation == "" {
-				tableData = append(tableData, []string{
-					item.Ip,
-					"N/A",
-					"N/A",
-					"N/A",
-					"N/A",
-					"N/A",
-					"N/A",
-					"N/A",
-					"N/A",
+				data.IPTableData = append(data.IPTableData, []string{
+					item.Ip, "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",
 				})
 				continue
 			}
-			reputationStyle := GetReputationStyle(valueStyle, item.Reputation)
 
-			tableData = append(tableData, []string{
+			data.IPTableData = append(data.IPTableData, []string{
 				item.Ip,
-				getFlag(country) + " " + country,
+				country,
 				asName,
-				reputationStyle.Render(item.Reputation),
-				GetLevelStyle(valueStyle, item.Confidence).Render(item.Confidence),
+				item.Reputation,
+				item.Confidence,
 				reverseDNS,
 				classif,
 				behaviors,
 				ipRange,
 			})
 		}
+	}
+
+	return data
+}
+
+func displayReportHuman(data *HumanReportData) error {
+	keyStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15"))
+	valueStyle := lipgloss.NewStyle().Bold(true)
+	writer := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
+	sectionStyle := pterm.NewStyle(pterm.FgWhite, pterm.Bold)
+	rd := NewRowDisplay(writer, maxKeyLength)
+
+	// Display General section
+	PrintSection(sectionStyle, "General")
+	for i, kv := range data.General {
+		// Apply special styling for known IPs percentages
+		if i == len(data.General)-2 {
+			rd.PrintRow(kv.Key, kv.Value, keyStyle, GetPercentKnownColor(valueStyle, data.KnownIPPercent))
+		} else if i == len(data.General)-1 {
+			rd.PrintRow(kv.Key, kv.Value, keyStyle, GetPercentKnownColor(valueStyle, data.KnownIPPercent))
+		} else {
+			rd.PrintRow(kv.Key, kv.Value, keyStyle, valueStyle)
+		}
+	}
+
+	PrintSection(sectionStyle, "Stats")
+
+	topWriter := tabwriter.NewWriter(os.Stdout, 0, 8, 10, '\t', tabwriter.AlignRight)
+	topRD := NewRowDisplay(topWriter, 50)
+
+	// Display top sections
+	for _, section := range data.TopSections {
+		rd.PrintRow(section.Emoji+" "+section.Title, "", keyStyle, valueStyle)
+		for _, item := range section.Items {
+			displayKey := fmt.Sprintf("\t %s", TruncateWithEllipsis(item.Key, maxKeyLen))
+			displayValue := fmt.Sprintf("%d (%.0f%%)", item.Value, item.Percent)
+
+			// Apply special styling for reputation
+			if section.Title == "Top Reputation" {
+				displayKey = fmt.Sprintf("\t %s", cases.Title(language.Und).String(TruncateWithEllipsis(item.Key, maxKeyLen)))
+				topRD.PrintRow(displayKey, displayValue, keyStyle, GetReputationStyle(valueStyle, item.Key))
+			} else if section.Title == "Top Countries" {
+				displayKey = fmt.Sprintf("\t %s %s", TruncateWithEllipsis(item.Key, maxKeyLen), getFlag(item.Key))
+				topRD.PrintRow(displayKey, displayValue, keyStyle, valueStyle)
+			} else {
+				topRD.PrintRow(displayKey, displayValue, keyStyle, valueStyle)
+			}
+		}
+		topWriter.Flush()
 		fmt.Println()
-		if err := pterm.DefaultTable.WithHasHeader().WithData(tableData).Render(); err != nil {
+	}
+
+	// Display IP table if available
+	if len(data.IPTableData) > 1 {
+		// Apply styling to the table data
+		var styledTableData [][]string
+		styledTableData = append(styledTableData, data.IPTableData[0]) // Header
+
+		for i := 1; i < len(data.IPTableData); i++ {
+			row := data.IPTableData[i]
+			if len(row) < 9 {
+				styledTableData = append(styledTableData, row)
+				continue
+			}
+
+			country := row[1]
+			reputation := row[3]
+			confidence := row[4]
+
+			styledRow := []string{
+				row[0], // IP
+				getFlag(country) + " " + country,
+				row[2], // AS Name
+				GetReputationStyle(valueStyle, reputation).Render(reputation),
+				GetLevelStyle(valueStyle, confidence).Render(confidence),
+				row[5], // Reverse DNS
+				row[6], // Profile
+				row[7], // Behaviors
+				row[8], // Range
+			}
+			styledTableData = append(styledTableData, styledRow)
+		}
+
+		if err := pterm.DefaultTable.WithHasHeader().WithData(styledTableData).Render(); err != nil {
 			style.Fatal(err.Error())
 		}
 	}
@@ -605,42 +686,28 @@ func displayReportJSON(item *models.Report, stats *models.ReportStats) error {
 	return nil
 }
 
-func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bool) error {
-	writer := csv.NewWriter(os.Stdout)
-	defer writer.Flush()
-
-	// Helper function to write multiple rows
-	writeRows := func(rows [][]string) error {
-		for _, row := range rows {
-			if err := writer.Write(row); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	// Collect all rows to write
+func buildCSVReportRows(report *models.Report, stats *models.ReportStats, withIPs bool, includeEmojis bool) [][]string {
 	var rows [][]string
 
 	// General section
 	rows = append(rows, []string{"General", "", ""})
 	rows = append(rows, []string{"", "", ""})
-	rows = append(rows, []string{"Report ID", strconv.Itoa(int(item.ID)), ""})
-	rows = append(rows, []string{"Report Name", item.Name, ""})
-	rows = append(rows, []string{"Creation Date", item.CreatedAt.Format("2006-01-02 15:04:05"), ""})
+	rows = append(rows, []string{"Report ID", strconv.Itoa(int(report.ID)), ""})
+	rows = append(rows, []string{"Report Name", report.Name, ""})
+	rows = append(rows, []string{"Creation Date", report.CreatedAt.Format("2006-01-02 15:04:05"), ""})
 
-	if item.IsFile {
-		rows = append(rows, []string{"File path", item.FilePath, ""})
-		rows = append(rows, []string{"SHA256", item.FileHash, ""})
+	if report.IsFile {
+		rows = append(rows, []string{"File path", report.FilePath, ""})
+		rows = append(rows, []string{"SHA256", report.FileHash, ""})
 	}
 
-	if item.IsQuery {
-		rows = append(rows, []string{"Query", item.Query, ""})
-		rows = append(rows, []string{"Since Duration", item.Since, ""})
-		rows = append(rows, []string{"Since Time", item.SinceTime.Format("2006-01-02 15:04:05"), ""})
+	if report.IsQuery {
+		rows = append(rows, []string{"Query", report.Query, ""})
+		rows = append(rows, []string{"Since Duration", report.Since, ""})
+		rows = append(rows, []string{"Since Time", report.SinceTime.Format("2006-01-02 15:04:05"), ""})
 	}
 
-	rows = append(rows, []string{"Number of IPs", strconv.Itoa(len(item.IPs)), ""})
+	rows = append(rows, []string{"Number of IPs", strconv.Itoa(len(report.IPs)), ""})
 
 	knownIPPercent := float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
 	ipsInBlocklistPercent := float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
@@ -655,10 +722,18 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	rows = append(rows, []string{"Stats", "", ""})
 	rows = append(rows, []string{"", "", ""})
 
+	// Helper function to format section titles with optional emojis
+	sectionTitle := func(emoji, title string) string {
+		if includeEmojis {
+			return emoji + " " + title
+		}
+		return title
+	}
+
 	// Top Reputation
 	TopReputation := getTopN(stats.TopReputation, maxTopDisplayReport)
 	if len(TopReputation) > 0 {
-		rows = append(rows, []string{"Top Reputation", "", ""})
+		rows = append(rows, []string{sectionTitle("🌟", "Top Reputation"), "", ""})
 		for _, stat := range TopReputation {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
 			rows = append(rows, []string{cases.Title(language.Und).String(stat.Key), fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
@@ -669,7 +744,7 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	// Top Classifications
 	topClassification := getTopN(stats.TopClassifications, maxTopDisplayReport)
 	if len(topClassification) > 0 {
-		rows = append(rows, []string{"Top Classifications", "", ""})
+		rows = append(rows, []string{sectionTitle("🗂️", "Top Classifications"), "", ""})
 		for _, stat := range topClassification {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
 			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
@@ -680,7 +755,7 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	// Top Behaviors
 	topBehaviors := getTopN(stats.TopBehaviors, maxTopDisplayReport)
 	if len(topBehaviors) > 0 {
-		rows = append(rows, []string{"Top Behaviors", "", ""})
+		rows = append(rows, []string{sectionTitle("🤖", "Top Behaviors"), "", ""})
 		for _, stat := range topBehaviors {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
 			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
@@ -691,7 +766,7 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	// Top Blocklists
 	topBlocklists := getTopN(stats.TopBlocklists, maxTopDisplayReport)
 	if len(topBlocklists) > 0 {
-		rows = append(rows, []string{"Top Blocklists", "", ""})
+		rows = append(rows, []string{sectionTitle("⛔", "Top Blocklists"), "", ""})
 		for _, stat := range topBlocklists {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
 			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
@@ -702,7 +777,7 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	// Top CVEs
 	topCVEs := getTopN(stats.TopCVEs, maxTopDisplayReport)
 	if len(topCVEs) > 0 {
-		rows = append(rows, []string{"Top CVEs", "", ""})
+		rows = append(rows, []string{sectionTitle("💥", "Top CVEs"), "", ""})
 		for _, stat := range topCVEs {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
 			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
@@ -713,7 +788,7 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	// Top IP Ranges
 	TopIPRange := getTopN(stats.TopIPRange, maxTopDisplayReport)
 	if len(TopIPRange) > 0 {
-		rows = append(rows, []string{"Top IP Ranges", "", ""})
+		rows = append(rows, []string{sectionTitle("🌐", "Top IP Ranges"), "", ""})
 		for _, stat := range TopIPRange {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
 			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
@@ -724,7 +799,7 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	// Top Autonomous Systems
 	topAS := getTopN(stats.TopAS, maxTopDisplayReport)
 	if len(topAS) > 0 {
-		rows = append(rows, []string{"Top Autonomous Systems", "", ""})
+		rows = append(rows, []string{sectionTitle("🛰️", "Top Autonomous Systems"), "", ""})
 		for _, stat := range topAS {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
 			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
@@ -735,7 +810,7 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 	// Top Countries
 	topCountry := getTopN(stats.TopCountries, maxTopDisplayReport)
 	if len(topCountry) > 0 {
-		rows = append(rows, []string{"Top Countries", "", ""})
+		rows = append(rows, []string{sectionTitle("🌎", "Top Countries"), "", ""})
 		for _, stat := range topCountry {
 			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
 			rows = append(rows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
@@ -743,349 +818,165 @@ func displayReportCSV(item *models.Report, stats *models.ReportStats, withIPs bo
 		rows = append(rows, []string{"", "", ""})
 	}
 
-	//write report IPs details
-	err := writeRows(rows)
-	if err != nil {
-		return err
+	return rows
+}
+
+func buildCSVDetailsRows(report *models.Report) [][]string {
+	var rows [][]string
+
+	//Header row
+	rows = append(rows, []string{
+		"IP", "Country", "AS Name", "Reputation", "Confidence",
+		"Reverse DNS", "Profile", "Behaviors", "Range", "First Seen", "Last Seen",
+	})
+
+	for _, ipItem := range report.IPs {
+		country := "N/A"
+		ipRange := "N/A"
+		asName := "N/A"
+		reverseDNS := "N/A"
+
+		if ipItem.ReverseDNS != nil && *ipItem.ReverseDNS != "" {
+			reverseDNS = *ipItem.ReverseDNS
+		}
+		if ipItem.Location.Country != nil && *ipItem.Location.Country != "" {
+			country = *ipItem.Location.Country
+		}
+		if ipItem.IpRange != nil && *ipItem.IpRange != "" {
+			ipRange = *ipItem.IpRange
+		}
+		if ipItem.AsName != nil && *ipItem.AsName != "" {
+			asName = *ipItem.AsName
+		}
+
+		behaviors := ""
+		for i, behavior := range ipItem.Behaviors {
+			if i > 0 {
+				behaviors += ", "
+			}
+			behaviors += behavior.Label
+		}
+		if behaviors == "" {
+			behaviors = "N/A"
+		}
+
+		classif := "N/A"
+		if len(ipItem.Classifications.Classifications) > 0 {
+			for _, classification := range ipItem.Classifications.Classifications {
+				if len(ipItem.Classifications.Classifications) > 1 && strings.ToLower(classification.Label) == "crowdsec community blocklist" {
+					continue
+				}
+				classif = classification.Label
+			}
+		}
+		if len(ipItem.Classifications.FalsePositives) > 0 {
+			for _, classification := range ipItem.Classifications.FalsePositives {
+				classif = classification.Label
+			}
+		}
+
+		firstSeen := "N/A"
+		lastSeen := "N/A"
+		if ipItem.History.FirstSeen != nil && *ipItem.History.FirstSeen != "" {
+			firstSeen = strings.Split(*ipItem.History.FirstSeen, "+")[0]
+		}
+		if ipItem.History.LastSeen != nil && *ipItem.History.LastSeen != "" {
+			lastSeen = strings.Split(*ipItem.History.LastSeen, "+")[0]
+		}
+
+		reputation := ipItem.Reputation
+		confidence := ipItem.Confidence
+		if reputation == "" {
+			reputation = "N/A"
+			confidence = "N/A"
+		}
+
+		rows = append(rows, []string{
+			ipItem.Ip, country, asName, reputation, confidence,
+			reverseDNS, classif, behaviors, ipRange, firstSeen, lastSeen,
+		})
 	}
 
-	// If detailed IP information is requested, show it
-	if withIPs {
-		rows = append(rows, []string{"", "", ""})
-		rows = append(rows, []string{"IP Details", "", ""})
-		rows = append(rows, []string{
-			"IP", "Country", "AS Name", "Reputation", "Confidence",
-			"Reverse DNS", "Profile", "Behaviors", "Range", "First Seen", "Last Seen",
-		})
+	return rows
+}
 
-		for _, ipItem := range item.IPs {
-			country := "N/A"
-			ipRange := "N/A"
-			asName := "N/A"
-			reverseDNS := "N/A"
-
-			if ipItem.ReverseDNS != nil && *ipItem.ReverseDNS != "" {
-				reverseDNS = *ipItem.ReverseDNS
-			}
-			if ipItem.Location.Country != nil && *ipItem.Location.Country != "" {
-				country = *ipItem.Location.Country
-			}
-			if ipItem.IpRange != nil && *ipItem.IpRange != "" {
-				ipRange = *ipItem.IpRange
-			}
-			if ipItem.AsName != nil && *ipItem.AsName != "" {
-				asName = *ipItem.AsName
-			}
-
-			behaviors := ""
-			for i, behavior := range ipItem.Behaviors {
-				if i > 0 {
-					behaviors += ", "
-				}
-				behaviors += behavior.Label
-			}
-			if behaviors == "" {
-				behaviors = "N/A"
-			}
-
-			classif := "N/A"
-			if len(ipItem.Classifications.Classifications) > 0 {
-				for _, classification := range ipItem.Classifications.Classifications {
-					if len(ipItem.Classifications.Classifications) > 1 && strings.ToLower(classification.Label) == "crowdsec community blocklist" {
-						continue
-					}
-					classif = classification.Label
-				}
-			}
-			if len(ipItem.Classifications.FalsePositives) > 0 {
-				for _, classification := range ipItem.Classifications.FalsePositives {
-					classif = classification.Label
-				}
-			}
-
-			firstSeen := "N/A"
-			lastSeen := "N/A"
-			if ipItem.History.FirstSeen != nil && *ipItem.History.FirstSeen != "" {
-				firstSeen = strings.Split(*ipItem.History.FirstSeen, "+")[0]
-			}
-			if ipItem.History.LastSeen != nil && *ipItem.History.LastSeen != "" {
-				lastSeen = strings.Split(*ipItem.History.LastSeen, "+")[0]
-			}
-
-			reputation := ipItem.Reputation
-			confidence := ipItem.Confidence
-			if reputation == "" {
-				reputation = "N/A"
-				confidence = "N/A"
-			}
-
-			rows = append(rows, []string{
-				ipItem.Ip, country, asName, reputation, confidence,
-				reverseDNS, classif, behaviors, ipRange, firstSeen, lastSeen,
-			})
+func displayCSVRows(rows [][]string) error {
+	writer := csv.NewWriter(os.Stdout)
+	defer writer.Flush()
+	for _, row := range rows {
+		if err := writer.Write(row); err != nil {
+			return err
 		}
 	}
 
-	// Write IP details rows
-	err = writeRows(rows)
-	if err != nil {
-		return err
-	}
-	// Write all rows at once
 	return nil
 }
 
-func TruncateWithEllipsis(s string, max int) string {
-	if len(s) <= max {
-		return s
-	}
-	if max <= 3 {
-		return "..."
-	}
-	return s[:max-3] + "..."
-}
-
-func saveReportCSV(report *models.Report, stats *models.ReportStats, withIPs bool, outputFilePath string) error {
-	// Always save the report summary
-	reportFilename := fmt.Sprintf("%s/report-%d.csv", outputFilePath, report.ID)
+func saveReportHuman(data *HumanReportData, reportID int, outputFilePath string) error {
+	// Save the report summary
+	reportFilename := fmt.Sprintf("%s/report-%d.txt", outputFilePath, reportID)
 	reportFile, err := os.Create(reportFilename)
 	if err != nil {
-		return fmt.Errorf("failed to create report CSV file %s: %v", reportFilename, err)
+		return fmt.Errorf("failed to create report text file %s: %v", reportFilename, err)
 	}
 	defer reportFile.Close()
 
-	reportWriter := csv.NewWriter(reportFile)
-	defer reportWriter.Flush()
-
-	// Collect all CSV rows
-	var csvRows [][]string
+	writer := tabwriter.NewWriter(reportFile, 0, 8, 1, '\t', tabwriter.AlignRight)
 
 	// General section
-	csvRows = append(csvRows, []string{"General", "", ""})
-	csvRows = append(csvRows, []string{"", "", ""})
-	csvRows = append(csvRows, []string{"Report ID", strconv.Itoa(int(report.ID)), ""})
-	csvRows = append(csvRows, []string{"Report Name", report.Name, ""})
-	csvRows = append(csvRows, []string{"Creation Date", report.CreatedAt.Format("2006-01-02 15:04:05"), ""})
-
-	if report.IsFile {
-		csvRows = append(csvRows, []string{"File path", report.FilePath, ""})
-		csvRows = append(csvRows, []string{"SHA256", report.FileHash, ""})
+	fmt.Fprintln(writer, "═══════════════════════════════════════════════════════════════")
+	fmt.Fprintln(writer, "General")
+	fmt.Fprintln(writer, "═══════════════════════════════════════════════════════════════")
+	for _, kv := range data.General {
+		fmt.Fprintf(writer, "%s:\t%s\n", kv.Key, kv.Value)
 	}
-
-	if report.IsQuery {
-		csvRows = append(csvRows, []string{"Query", report.Query, ""})
-		csvRows = append(csvRows, []string{"Since Duration", report.Since, ""})
-		csvRows = append(csvRows, []string{"Since Time", report.SinceTime.Format("2006-01-02 15:04:05"), ""})
-	}
-
-	csvRows = append(csvRows, []string{"Number of IPs", strconv.Itoa(len(report.IPs)), ""})
-
-	knownIPPercent := float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
-	ipsInBlocklistPercent := float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
-
-	csvRows = append(csvRows, []string{"Number of known IPs", fmt.Sprintf("%d", stats.NbIPs-stats.NbUnknownIPs), fmt.Sprintf("%.0f%%", knownIPPercent)})
-	csvRows = append(csvRows, []string{"Number of IPs in Blocklist", fmt.Sprintf("%d", stats.IPsBlockedByBlocklist), fmt.Sprintf("%.0f%%", ipsInBlocklistPercent)})
-
-	// Empty line before Stats section
-	csvRows = append(csvRows, []string{"", "", ""})
 
 	// Stats section
-	csvRows = append(csvRows, []string{"Stats", "", ""})
-	csvRows = append(csvRows, []string{"", "", ""})
+	fmt.Fprintln(writer, "")
+	fmt.Fprintln(writer, "═══════════════════════════════════════════════════════════════")
+	fmt.Fprintln(writer, "Stats")
+	fmt.Fprintln(writer, "═══════════════════════════════════════════════════════════════")
 
-	// Top Reputation
-	TopReputation := getTopN(stats.TopReputation, maxTopDisplayReport)
-	if len(TopReputation) > 0 {
-		csvRows = append(csvRows, []string{"🌟 Top Reputation", "", ""})
-		for _, stat := range TopReputation {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			csvRows = append(csvRows, []string{cases.Title(language.Und).String(stat.Key), fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
+	// Display top sections
+	for _, section := range data.TopSections {
+		fmt.Fprintf(writer, "%s:\n", section.Title)
+		for _, item := range section.Items {
+			displayKey := item.Key
+			if section.Title == "Top Reputation" {
+				displayKey = cases.Title(language.Und).String(item.Key)
+			}
+			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", displayKey, item.Value, item.Percent)
 		}
-		csvRows = append(csvRows, []string{"", "", ""})
+		fmt.Fprintln(writer, "")
 	}
 
-	// Top Classifications
-	topClassification := getTopN(stats.TopClassifications, maxTopDisplayReport)
-	if len(topClassification) > 0 {
-		csvRows = append(csvRows, []string{"🗂️ Top Classifications", "", ""})
-		for _, stat := range topClassification {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
-		}
-		csvRows = append(csvRows, []string{"", "", ""})
-	}
-
-	// Top Behaviors
-	topBehaviors := getTopN(stats.TopBehaviors, maxTopDisplayReport)
-	if len(topBehaviors) > 0 {
-		csvRows = append(csvRows, []string{"🤖 Top Behaviors", "", ""})
-		for _, stat := range topBehaviors {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
-		}
-		csvRows = append(csvRows, []string{"", "", ""})
-	}
-
-	// Top Blocklists
-	topBlocklists := getTopN(stats.TopBlocklists, maxTopDisplayReport)
-	if len(topBlocklists) > 0 {
-		csvRows = append(csvRows, []string{"⛔ Top Blocklists", "", ""})
-		for _, stat := range topBlocklists {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
-		}
-		csvRows = append(csvRows, []string{"", "", ""})
-	}
-
-	// Top CVEs
-	topCVEs := getTopN(stats.TopCVEs, maxTopDisplayReport)
-	if len(topCVEs) > 0 {
-		csvRows = append(csvRows, []string{"💥 Top CVEs", "", ""})
-		for _, stat := range topCVEs {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
-		}
-		csvRows = append(csvRows, []string{"", "", ""})
-	}
-
-	// Top IP Ranges
-	TopIPRange := getTopN(stats.TopIPRange, maxTopDisplayReport)
-	if len(TopIPRange) > 0 {
-		csvRows = append(csvRows, []string{"🌐 Top IP Ranges", "", ""})
-		for _, stat := range TopIPRange {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
-		}
-		csvRows = append(csvRows, []string{"", "", ""})
-	}
-
-	// Top Autonomous Systems
-	topAS := getTopN(stats.TopAS, maxTopDisplayReport)
-	if len(topAS) > 0 {
-		csvRows = append(csvRows, []string{"🛰️ Top Autonomous Systems", "", ""})
-		for _, stat := range topAS {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
-		}
-		csvRows = append(csvRows, []string{"", "", ""})
-	}
-
-	// Top Countries
-	topCountry := getTopN(stats.TopCountries, maxTopDisplayReport)
-	if len(topCountry) > 0 {
-		csvRows = append(csvRows, []string{"🌎 Top Countries", "", ""})
-		for _, stat := range topCountry {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			csvRows = append(csvRows, []string{stat.Key, fmt.Sprintf("%d", stat.Value), fmt.Sprintf("%.0f%%", percent)})
-		}
-		csvRows = append(csvRows, []string{"", "", ""})
-	}
-
-	// Write all rows at once
-	for _, row := range csvRows {
-		if err := reportWriter.Write(row); err != nil {
-			return fmt.Errorf("failed to write CSV row: %v", err)
-		}
-	}
-
+	writer.Flush()
 	fmt.Printf("Report summary saved to: %s\n", reportFilename)
 
 	// If detailed IP information is requested, save to a separate file
-	if withIPs {
-		detailsFilename := fmt.Sprintf("%s/details-%d.csv", outputFilePath, report.ID)
+	if len(data.IPTableData) > 1 {
+		detailsFilename := fmt.Sprintf("%s/details-%d.txt", outputFilePath, reportID)
 		detailsFile, err := os.Create(detailsFilename)
 		if err != nil {
-			return fmt.Errorf("failed to create details CSV file %s: %v", detailsFilename, err)
+			return fmt.Errorf("failed to create details text file %s: %v", detailsFilename, err)
 		}
 		defer detailsFile.Close()
 
-		detailsWriter := csv.NewWriter(detailsFile)
-		defer detailsWriter.Flush()
-
-		// Collect all IP detail rows
-		var detailRows [][]string
+		detailsWriter := tabwriter.NewWriter(detailsFile, 0, 8, 2, ' ', 0)
 
 		// Header
-		detailRows = append(detailRows, []string{
-			"IP", "Country", "AS Name", "Reputation", "Confidence",
-			"Reverse DNS", "Profile", "Behaviors", "Range", "First Seen", "Last Seen",
-		})
+		fmt.Fprintln(detailsWriter, "IP\tCountry\tAS Name\tReputation\tConfidence\tReverse DNS\tProfile\tBehaviors\tRange")
+		fmt.Fprintln(detailsWriter, "─────────────────\t──────────\t─────────────────────────\t──────────\t──────────\t─────────────────────────\t─────────────────────────\t─────────────────────────\t─────────────────")
 
-		// IP data
-		for _, ipItem := range report.IPs {
-			country := "N/A"
-			ipRange := "N/A"
-			asName := "N/A"
-			reverseDNS := "N/A"
-
-			if ipItem.ReverseDNS != nil && *ipItem.ReverseDNS != "" {
-				reverseDNS = *ipItem.ReverseDNS
-			}
-			if ipItem.Location.Country != nil && *ipItem.Location.Country != "" {
-				country = *ipItem.Location.Country
-			}
-			if ipItem.IpRange != nil && *ipItem.IpRange != "" {
-				ipRange = *ipItem.IpRange
-			}
-			if ipItem.AsName != nil && *ipItem.AsName != "" {
-				asName = *ipItem.AsName
-			}
-
-			behaviors := ""
-			for i, behavior := range ipItem.Behaviors {
-				if i > 0 {
-					behaviors += ", "
-				}
-				behaviors += behavior.Label
-			}
-			if behaviors == "" {
-				behaviors = "N/A"
-			}
-
-			classif := "N/A"
-			if len(ipItem.Classifications.Classifications) > 0 {
-				for _, classification := range ipItem.Classifications.Classifications {
-					if len(ipItem.Classifications.Classifications) > 1 && strings.ToLower(classification.Label) == "crowdsec community blocklist" {
-						continue
-					}
-					classif = classification.Label
-				}
-			}
-			if len(ipItem.Classifications.FalsePositives) > 0 {
-				for _, classification := range ipItem.Classifications.FalsePositives {
-					classif = classification.Label
-				}
-			}
-
-			firstSeen := "N/A"
-			lastSeen := "N/A"
-			if ipItem.History.FirstSeen != nil && *ipItem.History.FirstSeen != "" {
-				firstSeen = strings.Split(*ipItem.History.FirstSeen, "+")[0]
-			}
-			if ipItem.History.LastSeen != nil && *ipItem.History.LastSeen != "" {
-				lastSeen = strings.Split(*ipItem.History.LastSeen, "+")[0]
-			}
-
-			reputation := ipItem.Reputation
-			confidence := ipItem.Confidence
-			if reputation == "" {
-				reputation = "N/A"
-				confidence = "N/A"
-			}
-
-			detailRows = append(detailRows, []string{
-				ipItem.Ip, country, asName, reputation, confidence,
-				reverseDNS, classif, behaviors, ipRange, firstSeen, lastSeen,
-			})
+		// Write IP data rows (skip header row)
+		for i := 1; i < len(data.IPTableData); i++ {
+			row := data.IPTableData[i]
+			fmt.Fprintf(detailsWriter, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+				row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8],
+			)
 		}
 
-		// Write all detail rows at once
-		for _, row := range detailRows {
-			if err := detailsWriter.Write(row); err != nil {
-				return fmt.Errorf("failed to write detail CSV row: %v", err)
-			}
-		}
-
+		detailsWriter.Flush()
 		fmt.Printf("IP details saved to: %s\n", detailsFilename)
 	}
 
@@ -1141,227 +1032,58 @@ func saveReportJSON(report *models.Report, stats *models.ReportStats, withIPs bo
 	return nil
 }
 
-func saveReportHuman(report *models.Report, stats *models.ReportStats, withIPs bool, outputFilePath string) error {
-	// Save the report summary
-	reportFilename := fmt.Sprintf("%s/report-%d.txt", outputFilePath, report.ID)
+func saveReportCSV(csvReportRows [][]string, csvDetailRows [][]string, reportID int, outputFilePath string) error {
+	// Always save the report summary
+	reportFilename := fmt.Sprintf("%s/report-%d.csv", outputFilePath, reportID)
 	reportFile, err := os.Create(reportFilename)
 	if err != nil {
-		return fmt.Errorf("failed to create report text file %s: %v", reportFilename, err)
+		return fmt.Errorf("failed to create report CSV file %s: %v", reportFilename, err)
 	}
 	defer reportFile.Close()
 
-	// Use a tabwriter for consistent formatting
-	writer := tabwriter.NewWriter(reportFile, 0, 8, 1, '\t', tabwriter.AlignRight)
+	reportWriter := csv.NewWriter(reportFile)
+	defer reportWriter.Flush()
 
-	// General section
-	fmt.Fprintln(writer, "═══════════════════════════════════════════════════════════════")
-	fmt.Fprintln(writer, "General")
-	fmt.Fprintln(writer, "═══════════════════════════════════════════════════════════════")
-	fmt.Fprintf(writer, "Report ID:\t%d\n", report.ID)
-	fmt.Fprintf(writer, "Report Name:\t%s\n", report.Name)
-	fmt.Fprintf(writer, "Creation Date:\t%s\n", report.CreatedAt.Format("2006-01-02 15:04:05"))
-
-	if report.IsFile {
-		fmt.Fprintf(writer, "File path:\t%s\n", report.FilePath)
-		fmt.Fprintf(writer, "SHA256:\t%s\n", report.FileHash)
-	}
-
-	if report.IsQuery {
-		fmt.Fprintf(writer, "Query:\t%s\n", report.Query)
-		fmt.Fprintf(writer, "Since Duration:\t%s\n", report.Since)
-		fmt.Fprintf(writer, "Since Time:\t%s\n", report.SinceTime.Format("2006-01-02 15:04:05"))
-	}
-
-	fmt.Fprintf(writer, "Number of IPs:\t%d\n", len(report.IPs))
-
-	knownIPPercent := float64(stats.NbIPs-stats.NbUnknownIPs) / float64(stats.NbIPs) * 100
-	ipsInBlocklistPercent := float64(stats.IPsBlockedByBlocklist) / float64(stats.NbIPs) * 100
-
-	fmt.Fprintf(writer, "Number of known IPs:\t%d (%.0f%%)\n", stats.NbIPs-stats.NbUnknownIPs, knownIPPercent)
-	fmt.Fprintf(writer, "Number of IPs in Blocklist:\t%d (%.0f%%)\n", stats.IPsBlockedByBlocklist, ipsInBlocklistPercent)
-
-	// Stats section
-	fmt.Fprintln(writer, "")
-	fmt.Fprintln(writer, "═══════════════════════════════════════════════════════════════")
-	fmt.Fprintln(writer, "Stats")
-	fmt.Fprintln(writer, "═══════════════════════════════════════════════════════════════")
-
-	// Top Reputation
-	TopReputation := getTopN(stats.TopReputation, maxTopDisplayReport)
-	if len(TopReputation) > 0 {
-		fmt.Fprintln(writer, "Top Reputation:")
-		for _, stat := range TopReputation {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", cases.Title(language.Und).String(stat.Key), stat.Value, percent)
+	// Write all rows
+	for _, row := range csvReportRows {
+		if err := reportWriter.Write(row); err != nil {
+			return fmt.Errorf("failed to write CSV row: %v", err)
 		}
-		fmt.Fprintln(writer, "")
 	}
 
-	// Top Classifications
-	topClassification := getTopN(stats.TopClassifications, maxTopDisplayReport)
-	if len(topClassification) > 0 {
-		fmt.Fprintln(writer, "Top Classifications:")
-		for _, stat := range topClassification {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", stat.Key, stat.Value, percent)
-		}
-		fmt.Fprintln(writer, "")
-	}
-
-	// Top Behaviors
-	topBehaviors := getTopN(stats.TopBehaviors, maxTopDisplayReport)
-	if len(topBehaviors) > 0 {
-		fmt.Fprintln(writer, "Top Behaviors:")
-		for _, stat := range topBehaviors {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", stat.Key, stat.Value, percent)
-		}
-		fmt.Fprintln(writer, "")
-	}
-
-	// Top Blocklists
-	topBlocklists := getTopN(stats.TopBlocklists, maxTopDisplayReport)
-	if len(topBlocklists) > 0 {
-		fmt.Fprintln(writer, "Top Blocklists:")
-		for _, stat := range topBlocklists {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", stat.Key, stat.Value, percent)
-		}
-		fmt.Fprintln(writer, "")
-	}
-
-	// Top CVEs
-	topCVEs := getTopN(stats.TopCVEs, maxTopDisplayReport)
-	if len(topCVEs) > 0 {
-		fmt.Fprintln(writer, "Top CVEs:")
-		for _, stat := range topCVEs {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", stat.Key, stat.Value, percent)
-		}
-		fmt.Fprintln(writer, "")
-	}
-
-	// Top IP Ranges
-	TopIPRange := getTopN(stats.TopIPRange, maxTopDisplayReport)
-	if len(TopIPRange) > 0 {
-		fmt.Fprintln(writer, "Top IP Ranges:")
-		for _, stat := range TopIPRange {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", stat.Key, stat.Value, percent)
-		}
-		fmt.Fprintln(writer, "")
-	}
-
-	// Top Autonomous Systems
-	topAS := getTopN(stats.TopAS, maxTopDisplayReport)
-	if len(topAS) > 0 {
-		fmt.Fprintln(writer, "Top Autonomous Systems:")
-		for _, stat := range topAS {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", stat.Key, stat.Value, percent)
-		}
-		fmt.Fprintln(writer, "")
-	}
-
-	// Top Countries
-	topCountry := getTopN(stats.TopCountries, maxTopDisplayReport)
-	if len(topCountry) > 0 {
-		fmt.Fprintln(writer, "Top Countries:")
-		for _, stat := range topCountry {
-			percent := float64(stat.Value) / float64(stats.NbIPs) * 100
-			fmt.Fprintf(writer, "  %s:\t%d (%.0f%%)\n", stat.Key, stat.Value, percent)
-		}
-		fmt.Fprintln(writer, "")
-	}
-
-	writer.Flush()
 	fmt.Printf("Report summary saved to: %s\n", reportFilename)
 
-	// If detailed IP information is requested, save to a separate file
-	if withIPs {
-		detailsFilename := fmt.Sprintf("%s/details-%d.txt", outputFilePath, report.ID)
+	if len(csvDetailRows) > 1 {
+		detailsFilename := fmt.Sprintf("%s/details-%d.csv", outputFilePath, reportID)
 		detailsFile, err := os.Create(detailsFilename)
 		if err != nil {
-			return fmt.Errorf("failed to create details text file %s: %v", detailsFilename, err)
+			return fmt.Errorf("failed to create details CSV file %s: %v", detailsFilename, err)
 		}
 		defer detailsFile.Close()
 
-		detailsWriter := tabwriter.NewWriter(detailsFile, 0, 8, 2, ' ', 0)
+		detailsWriter := csv.NewWriter(detailsFile)
+		defer detailsWriter.Flush()
 
-		// Header
-		fmt.Fprintln(detailsWriter, "IP\tCountry\tAS Name\tReputation\tConfidence\tReverse DNS\tProfile\tBehaviors\tRange\tFirst Seen\tLast Seen")
-		fmt.Fprintln(detailsWriter, "─────────────────\t──────────\t─────────────────────────\t──────────\t──────────\t─────────────────────────\t─────────────────────────\t─────────────────────────\t─────────────────\t─────────────────────\t─────────────────────")
-
-		for _, ipItem := range report.IPs {
-			country := "N/A"
-			ipRange := "N/A"
-			asName := "N/A"
-			reverseDNS := "N/A"
-
-			if ipItem.ReverseDNS != nil && *ipItem.ReverseDNS != "" {
-				reverseDNS = *ipItem.ReverseDNS
+		// Write all detail rows
+		for _, row := range csvDetailRows {
+			if err := detailsWriter.Write(row); err != nil {
+				return fmt.Errorf("failed to write detail CSV row: %v", err)
 			}
-			if ipItem.Location.Country != nil && *ipItem.Location.Country != "" {
-				country = *ipItem.Location.Country
-			}
-			if ipItem.IpRange != nil && *ipItem.IpRange != "" {
-				ipRange = *ipItem.IpRange
-			}
-			if ipItem.AsName != nil && *ipItem.AsName != "" {
-				asName = *ipItem.AsName
-			}
-
-			behaviors := ""
-			for i, behavior := range ipItem.Behaviors {
-				if i > 0 {
-					behaviors += ", "
-				}
-				behaviors += behavior.Label
-			}
-			if behaviors == "" {
-				behaviors = "N/A"
-			}
-
-			classif := "N/A"
-			if len(ipItem.Classifications.Classifications) > 0 {
-				for _, classification := range ipItem.Classifications.Classifications {
-					if len(ipItem.Classifications.Classifications) > 1 && strings.ToLower(classification.Label) == "crowdsec community blocklist" {
-						continue
-					}
-					classif = classification.Label
-				}
-			}
-			if len(ipItem.Classifications.FalsePositives) > 0 {
-				for _, classification := range ipItem.Classifications.FalsePositives {
-					classif = classification.Label
-				}
-			}
-
-			firstSeen := "N/A"
-			lastSeen := "N/A"
-			if ipItem.History.FirstSeen != nil && *ipItem.History.FirstSeen != "" {
-				firstSeen = strings.Split(*ipItem.History.FirstSeen, "+")[0]
-			}
-			if ipItem.History.LastSeen != nil && *ipItem.History.LastSeen != "" {
-				lastSeen = strings.Split(*ipItem.History.LastSeen, "+")[0]
-			}
-
-			reputation := ipItem.Reputation
-			confidence := ipItem.Confidence
-			if reputation == "" {
-				reputation = "N/A"
-				confidence = "N/A"
-			}
-
-			fmt.Fprintf(detailsWriter, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-				ipItem.Ip, country, asName, reputation, confidence,
-				reverseDNS, classif, behaviors, ipRange, firstSeen, lastSeen,
-			)
 		}
-
-		detailsWriter.Flush()
-		fmt.Printf("IP details saved to: %s\n", detailsFilename)
+		fmt.Printf("IP details included in: %s\n", detailsFilename)
 	}
 
 	return nil
+}
+
+//// Utility functions
+
+func TruncateWithEllipsis(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	if max <= 3 {
+		return "..."
+	}
+	return s[:max-3] + "..."
 }
