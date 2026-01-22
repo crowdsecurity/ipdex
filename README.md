@@ -15,36 +15,41 @@ Your ultimate IP dex!
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Prerequisites](#prerequisites)
-- [Quickstart](#quickstart)
-  - [Install](#1-install)
-  - [Make sure the binary is in your PATH](#2-make-sure-the-binary-is-in-your-path)
-  - [Initialize the tool](#3-initialize-the-tool)
-  - [Query an IP](#4-query-an-ip)
-  - [Scan a file](#5-scan-a-file)
-- [Configuration](#configuration)
-- [User Guide](#user-guide)
-  - [Scan an IP](#scan-an-ip)
-  - [Refresh an IP](#refresh-an-ip)
-  - [Scan a file](#scan-a-file-1)
-  - [Refresh a file](#refresh-a-file)
-  - [Display all reports](#display-all-reports)
-  - [Showing a specific report](#showing-a-specific-report)
-- [Commands](#commands)
-  - [`init`](#init)
-  - [`report`](#report)
-    - [List reports](#list-reports)
-    - [View a report](#view-a-report)
-    - [Delete a report](#delete-a-report)
-  - [`search`](#search)
-    - [Search IPs reported for a specific CVE](#search-ips-reported-for-a-specific-cve)
-    - [Search IPs reported for HTTP scan since 30 minutes](#search-ips-reported-for-http-scan-since-30-minutes)
-    - [Search malicious VPN or Proxy IPs since 1h and show all IPs](#search-malicious-vpn-or-proxy-ips-since-1h-and-show-all-ips)
-  - [`config`](#config)
-    - [Show config](#show-config)
-    - [Set a new API Key](#set-a-new-api-key)
-- [License](#license)
+- [ipdex](#ipdex)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Prerequisites](#prerequisites)
+  - [Quickstart](#quickstart)
+    - [1. Install](#1-install)
+      - [Install with Go](#install-with-go)
+      - [macOS / Linux](#macos--linux)
+        - [Linux](#linux)
+        - [macOS](#macos)
+      - [Windows](#windows)
+    - [2. Make sure the binary is in your PATH](#2-make-sure-the-binary-is-in-your-path)
+    - [3. Initialize the tool](#3-initialize-the-tool)
+    - [4. Query an IP](#4-query-an-ip)
+    - [5. Scan a file](#5-scan-a-file)
+  - [Configuration](#configuration)
+  - [User Guide](#user-guide)
+    - [Scan an IP](#scan-an-ip)
+    - [Refresh an IP](#refresh-an-ip)
+    - [Scan a file](#scan-a-file)
+    - [Refresh a file](#refresh-a-file)
+    - [Output formats](#output-formats)
+    - [Saving reports to files](#saving-reports-to-files)
+    - [`report`](#report)
+      - [List reports](#list-reports)
+      - [View a report](#view-a-report)
+      - [Delete a report](#delete-a-report)
+    - [`search`](#search)
+      - [Search IPs reported for a specific CVE](#search-ips-reported-for-a-specific-cve)
+      - [Search IPs reported for HTTP scan since 30 minutes](#search-ips-reported-for-http-scan-since-30-minutes)
+      - [Search malicious VPN or Proxy IPs since 1h and show all IPs](#search-malicious-vpn-or-proxy-ips-since-1h-and-show-all-ips)
+    - [`config`](#config)
+      - [Show config](#show-config)
+      - [Set a new API Key](#set-a-new-api-key)
+  - [License](#license)
 
 ---
 
@@ -162,6 +167,8 @@ ipdex /var/log/nginx.log
 
 <p align="center"> <img src="img/ipdex_file.svg" alt="ipdex scanning a file" width="900" /> </p>
 
+**💡 Tip:** You can output results in different formats (`-o json`, `-o csv`) and save them to files using `--output-path`. See [Output formats](#output-formats) and [Saving reports to files](#saving-reports-to-files) for more details.
+
 ---
 
 ## Configuration
@@ -201,6 +208,31 @@ When running ipdex on a file that has been previously scanned, it will update th
 ```
 ipdex <filepath> -r
 ```
+
+### Output formats
+
+ipdex supports multiple output formats to suit different use cases using the -o option:
+
+- **human** (default): Interactive, colorized output optimized for terminal viewing
+- **json**: `-o json` Machine-readable JSON format for programmatic processing
+- **csv**: `-o csv` Comma-separated values format for spreadsheet analysis
+
+### Saving reports to files
+
+You can save reports to disk using the `--output-path` flag. This works with all output formats and automatically creates separate files for the report summary and the detailed IP information (if you used the -d option).
+
+```bash
+# Save report as CSV files report and details
+ipdex ips.txt -o csv -d --output-path /path/to/output
+
+# This creates:
+# - /path/to/output/report_<id>.csv (summary statistics)
+# - /path/to/output/report_<id>_details.csv (detailed IP information, when using -d flag)
+
+# You can also do it for an existing report
+ipdex report show 18 -o csv --output-path /path/to/output -d
+
+**Note:** When using `--output-path`, reports are saved to files in addition to being displayed in the terminal.
 
 ### Display all reports
 
@@ -242,7 +274,11 @@ ipdex report list
 #### View a report
 
 ```bash
+# View a report in human-readable format
 ipdex report show 2
+
+# View report with details as CSV and save
+ipdex report show 2 -o csv --output-path ./exports -d
 ```
 
 #### Delete a report
