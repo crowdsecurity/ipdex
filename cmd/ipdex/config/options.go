@@ -38,7 +38,7 @@ func GetConfigFolder() (string, error) {
 
 func IsSupportedOutputFormat(outputFormat string) bool {
 	switch outputFormat {
-	case display.JSONFormat, display.HumanFormat:
+	case display.JSONFormat, display.HumanFormat, display.CSVFormat:
 		return true
 	default:
 		return false
