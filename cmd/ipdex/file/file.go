@@ -206,7 +206,7 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 		}
 	}
 	stats := reportClient.GetStats(report)
-	if err := reportClient.Display(report, stats, viper.GetString(config.OutputFormatOption), config.Detailed); err != nil {
+	if err := reportClient.Display(report, stats, viper.GetString(config.OutputFormatOption), config.Detailed, config.OutputFile); err != nil {
 		style.Fatal(err.Error())
 	}
 	if !reportExist && outputFormat == display.HumanFormat {

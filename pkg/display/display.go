@@ -12,6 +12,7 @@ import (
 
 	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
 	"github.com/crowdsecurity/ipdex/pkg/models"
+	"github.com/crowdsecurity/ipdex/pkg/pdf"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/crowdsecurity/crowdsec/pkg/cticlient"
@@ -23,6 +24,7 @@ import (
 const (
 	JSONFormat                = "json"
 	HumanFormat               = "human"
+	PDFFormat                 = "pdf"
 	maxCVEDisplay             = 3
 	maxBehaviorsDisplay       = 3
 	maxClassificationDisplay  = 3
@@ -285,7 +287,7 @@ func displayIP(item *cticlient.SmokeItem, ipLastRefresh time.Time, detailed bool
 	return nil
 }
 
-func (d *Display) DisplayReport(item *models.Report, stats *models.ReportStats, format string, withIPs bool) error {
+func (d *Display) DisplayReport(item *models.Report, stats *models.ReportStats, format string, withIPs bool, outputFilePath string) error {
 	switch format {
 	case HumanFormat:
 		if err := displayReport(item, stats, withIPs); err != nil {
@@ -295,6 +297,14 @@ func (d *Display) DisplayReport(item *models.Report, stats *models.ReportStats, 
 		if err := displayReportJSON(item, stats); err != nil {
 			return err
 		}
+	case PDFFormat:
+		if outputFilePath == "" {
+			return fmt.Errorf("--output-file is required for PDF format (e.g., --output-file report.pdf)")
+		}
+		if err := pdf.GenerateReport(item, stats, withIPs, outputFilePath); err != nil {
+			return err
+		}
+		fmt.Printf("PDF report saved to: %s\n", outputFilePath)
 	default:
 		return fmt.Errorf("format '%s' not supported", format)
 	}
