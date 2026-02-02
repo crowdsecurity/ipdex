@@ -73,6 +73,12 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 			}
 		}
 		nbIPToProcess = len(ipsToProcess)
+		if nbIPToProcess == 0 {
+			if outputFormat == display.HumanFormat {
+				style.Info("No valid IP addresses found in the file.")
+			}
+			return
+		}
 	} else {
 
 		for _, ip := range report.IPs {
