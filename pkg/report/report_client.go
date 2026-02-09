@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/crowdsecurity/ipdex/cmd/ipdex/config"
 	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
 	"github.com/crowdsecurity/ipdex/pkg/database"
 	"github.com/crowdsecurity/ipdex/pkg/display"
@@ -198,6 +199,17 @@ func (r *ReportClient) GetExpiredIPFromReport(reportID uint) ([]string, error) {
 }
 
 func (r *ReportClient) Display(report *models.Report, stats *models.ReportStats, outputFormat string, withIPs bool, outputFilePath string) error {
+	// Check if output path exists and offer to create it
+	if outputFilePath != "" {
+		ok, err := config.EnsureOutputPath(outputFilePath)
+		if err != nil {
+			return fmt.Errorf("output path error: %w", err)
+		}
+		if !ok {
+			return fmt.Errorf("output directory does not exist and was not created")
+		}
+	}
+
 	displayer := display.NewDisplay()
 	return displayer.DisplayReport(report, stats, outputFormat, withIPs, outputFilePath)
 }

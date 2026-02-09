@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/crowdsecurity/ipdex/cmd/ipdex/style"
 	"github.com/crowdsecurity/ipdex/pkg/models"
+	"github.com/crowdsecurity/ipdex/pkg/pdf"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/crowdsecurity/crowdsec/pkg/cticlient"
@@ -25,6 +27,7 @@ const (
 	JSONFormat                = "json"
 	HumanFormat               = "human"
 	CSVFormat                 = "csv"
+	PDFFormat                 = "pdf"
 	maxCVEDisplay             = 3
 	maxBehaviorsDisplay       = 3
 	maxClassificationDisplay  = 3
@@ -115,6 +118,13 @@ func (d *Display) DisplayReport(report *models.Report, stats *models.ReportStats
 			if err := saveReportCSV(csvReportRows, csvDetailRows, int(report.ID), outputFilePath); err != nil {
 				return err
 			}
+		}
+	case PDFFormat:
+		if outputFilePath == "" {
+			return fmt.Errorf("--output-file is required for PDF format")
+		}
+		if err := pdf.GenerateReport(report, stats, withIPs, outputFilePath); err != nil {
+			return err
 		}
 	default:
 		return fmt.Errorf("format '%s' not supported", format)
@@ -914,7 +924,7 @@ func displayCSVRows(rows [][]string) error {
 
 func saveReportHuman(data *HumanReportData, reportID int, outputFilePath string) error {
 	// Save the report summary
-	reportFilename := fmt.Sprintf("%s/report-%d.txt", outputFilePath, reportID)
+	reportFilename := filepath.Join(outputFilePath, fmt.Sprintf("report-%d.txt", reportID))
 	reportFile, err := os.Create(reportFilename)
 	if err != nil {
 		return fmt.Errorf("failed to create report text file %s: %v", reportFilename, err)
@@ -955,7 +965,7 @@ func saveReportHuman(data *HumanReportData, reportID int, outputFilePath string)
 
 	// If detailed IP information is requested, save to a separate file
 	if len(data.IPTableData) > 1 {
-		detailsFilename := fmt.Sprintf("%s/details-%d.txt", outputFilePath, reportID)
+		detailsFilename := filepath.Join(outputFilePath, fmt.Sprintf("details-%d.txt", reportID))
 		detailsFile, err := os.Create(detailsFilename)
 		if err != nil {
 			return fmt.Errorf("failed to create details text file %s: %v", detailsFilename, err)
@@ -985,7 +995,7 @@ func saveReportHuman(data *HumanReportData, reportID int, outputFilePath string)
 
 func saveReportJSON(report *models.Report, stats *models.ReportStats, withIPs bool, outputFilePath string) error {
 	// Save the report summary
-	reportFilename := fmt.Sprintf("%s/report-%d.json", outputFilePath, report.ID)
+	reportFilename := filepath.Join(outputFilePath, fmt.Sprintf("report-%d.json", report.ID))
 	reportFile, err := os.Create(reportFilename)
 	if err != nil {
 		return fmt.Errorf("failed to create report JSON file %s: %v", reportFilename, err)
@@ -1013,7 +1023,7 @@ func saveReportJSON(report *models.Report, stats *models.ReportStats, withIPs bo
 
 	// If detailed IP information is requested, save to a separate file
 	if withIPs {
-		detailsFilename := fmt.Sprintf("%s/details-%d.json", outputFilePath, report.ID)
+		detailsFilename := filepath.Join(outputFilePath, fmt.Sprintf("details-%d.json", report.ID))
 		detailsFile, err := os.Create(detailsFilename)
 		if err != nil {
 			return fmt.Errorf("failed to create details JSON file %s: %v", detailsFilename, err)
@@ -1034,7 +1044,7 @@ func saveReportJSON(report *models.Report, stats *models.ReportStats, withIPs bo
 
 func saveReportCSV(csvReportRows [][]string, csvDetailRows [][]string, reportID int, outputFilePath string) error {
 	// Always save the report summary
-	reportFilename := fmt.Sprintf("%s/report-%d.csv", outputFilePath, reportID)
+	reportFilename := filepath.Join(outputFilePath, fmt.Sprintf("report-%d.csv", reportID))
 	reportFile, err := os.Create(reportFilename)
 	if err != nil {
 		return fmt.Errorf("failed to create report CSV file %s: %v", reportFilename, err)
@@ -1054,7 +1064,7 @@ func saveReportCSV(csvReportRows [][]string, csvDetailRows [][]string, reportID 
 	fmt.Printf("Report summary saved to: %s\n", reportFilename)
 
 	if len(csvDetailRows) > 1 {
-		detailsFilename := fmt.Sprintf("%s/details-%d.csv", outputFilePath, reportID)
+		detailsFilename := filepath.Join(outputFilePath, fmt.Sprintf("details-%d.csv", reportID))
 		detailsFile, err := os.Create(detailsFilename)
 		if err != nil {
 			return fmt.Errorf("failed to create details CSV file %s: %v", detailsFilename, err)
