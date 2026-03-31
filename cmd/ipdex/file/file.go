@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
 
 	"github.com/crowdsecurity/crowdsec/pkg/cticlient"
 	"github.com/pterm/pterm"
@@ -25,6 +24,40 @@ import (
 var (
 	ipRegex = regexp.MustCompile(`(?:[0-9]{1,3}\.){3}[0-9]{1,3}|[a-fA-F0-9:]+`)
 )
+
+func collectIPsFromFile(filePath string) ([]string, error) {
+	readFile, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer readFile.Close()
+
+	ipsToProcess := make([]string, 0)
+	seenIPs := make(map[string]struct{})
+	fileScanner := bufio.NewScanner(readFile)
+	fileScanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	fileScanner.Split(bufio.ScanLines)
+
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+		ipsMatch := ipRegex.FindAllString(line, -1)
+		for _, ipAddr := range ipsMatch {
+			if !config.IsValidIP(ipAddr) {
+				continue
+			}
+			if _, exists := seenIPs[ipAddr]; exists {
+				continue
+			}
+			seenIPs[ipAddr] = struct{}{}
+			ipsToProcess = append(ipsToProcess, ipAddr)
+		}
+	}
+	if err := fileScanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return ipsToProcess, nil
+}
 
 func FileCommand(file string, forceRefresh bool, yes bool) {
 	outputFormat := viper.GetString(config.OutputFormatOption)
@@ -52,25 +85,12 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 		reportExist = false
 	}
 	if !reportExist {
-		readFile, err := os.Open(filepath)
+		if outputFormat == display.HumanFormat {
+			style.Infof("Scanning file '%s' for IPs...", filepath)
+		}
+		ipsToProcess, err = collectIPsFromFile(filepath)
 		if err != nil {
 			style.Fatal(err.Error())
-		}
-
-		fileScanner := bufio.NewScanner(readFile)
-		fileScanner.Split(bufio.ScanLines)
-		for fileScanner.Scan() {
-			line := fileScanner.Text()
-			ipsMatch := ipRegex.FindAllString(line, -1)
-			for _, ipAddr := range ipsMatch {
-				if slices.Contains(ipsToProcess, ipAddr) {
-					continue
-				}
-				if !config.IsValidIP(ipAddr) {
-					continue
-				}
-				ipsToProcess = append(ipsToProcess, ipAddr)
-			}
 		}
 		nbIPToProcess = len(ipsToProcess)
 		if nbIPToProcess == 0 {
@@ -78,6 +98,9 @@ func FileCommand(file string, forceRefresh bool, yes bool) {
 				style.Info("No valid IP addresses found in the file.")
 			}
 			return
+		}
+		if outputFormat == display.HumanFormat {
+			style.Infof("Found %d unique IPs.", nbIPToProcess)
 		}
 	} else {
 
